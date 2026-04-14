@@ -492,8 +492,6 @@ El sistema **NO** utiliza LLMs en tiempo de ejecución para los cálculos normat
 
 ### 4.1 Diagrama de Componentes y Módulos
 
-### 4.1 Diagrama de Componentes y Módulos
-
 ```mermaid
 flowchart TB
   subgraph API["API REST\nCapa de Entrada"]
@@ -569,6 +567,137 @@ flowchart TB
 
 **Diagrama de Clases:**
 
+```mermaid
+classDiagram
+    class MotorCalculo {
+        +calcularLiquidacion(input: InputCalculo, snap: SnapshotParametros) ResultadoCalculo
+        -calcularIngresoBruto(contratos: List~Contrato~) Decimal
+        -calcularIBC(ingresoBruto: Decimal, snap: SnapshotParametros) Decimal
+        -evaluarPisoProteccion(ingresoNeto: Decimal, snap: SnapshotParametros) Boolean
+        -liquidarAportes(ibc: Decimal, nivel_arl: String, snap: SnapshotParametros) AportesIntermedios
+        -calcularRetencion(ingresoBruto: Decimal, aportes: AportesIntermedios, snap: SnapshotParametros) Decimal
+        -validarConsistenciaTransversal(resultado: ResultadoCalculo, snap: SnapshotParametros) ResultadoValidacion
+    }
+
+    class InputCalculo {
+        +UUID id_perfil
+        +String periodo
+        +List~Contrato~ contratos
+        +Decimal ingreso_bruto_total
+        +String nivel_arl
+        +String codigo_ciiu
+    }
+
+    class SnapshotParametros {
+        +UUID id_snapshot
+        +String periodo_referencia
+        +Decimal smmlv
+        +Decimal uvt
+        +Decimal pct_salud
+        +Decimal pct_pension
+        +Decimal pct_arl_nivel_i
+        +Decimal pct_arl_nivel_ii
+        +Decimal pct_arl_nivel_iii
+        +Decimal pct_arl_nivel_iv
+        +Decimal pct_arl_nivel_v
+        +Decimal pct_ciiu
+        +DateTime capturado_en
+        +obtenerArlPorNivel(nivel: String) Decimal
+    }
+
+    class ResultadoCalculo {
+        +Decimal ingreso_bruto_total
+        +Decimal ibc
+        +Decimal aporte_salud
+        +Decimal aporte_pension
+        +Decimal aporte_arl
+        +Decimal total_aportes_sgssi
+        +Decimal base_gravable_retencion
+        +Decimal retencion_fuente
+        +Boolean aplico_piso_proteccion
+        +Boolean aplico_regla_40_pct
+        +List~String~ alertas
+        +ResultadoValidacion validacion_ct
+    }
+
+    class AportesIntermedios {
+        +Decimal salud
+        +Decimal pension
+        +Decimal arl
+        +Decimal total
+    }
+
+    class ResultadoValidacion {
+        +Boolean ct01_ok
+        +Boolean ct02_ok
+        +Boolean ct03_ok
+        +Boolean ct04_ok
+        +List~String~ errores_bloqueantes
+    }
+
+    MotorCalculo ..> InputCalculo : recibe
+    MotorCalculo ..> SnapshotParametros : recibe
+    MotorCalculo ..> ResultadoCalculo : retorna
+    MotorCalculo ..> AportesIntermedios : usa internamente
+    ResultadoCalculo *-- ResultadoValidacion : contiene
+```
+
+**Diagrama de Secuencia — Flujo RF-03..RF-07**
+
+
+```mermaid
+sequenceDiagram
+    participant ML as mod-liquidacion
+    participant MC as MotorCalculo
+    participant PI as Pipeline Interno
+    
+    ML->>MC: calcularLiquidacion(input, snapshot)
+    activate MC
+    
+    MC->>PI: calcularIngresoBruto(contratos)
+    activate PI
+    Note right of PI: RF-03: suma honorarios<br/>por contrato activo
+    PI-->>MC: ingresoBruto: Decimal
+    deactivate PI
+    
+    MC->>PI: calcularIBC(ingresoBruto, snapshot)
+    activate PI
+    Note right of PI: RF-04: Regla del 40%<br/>costos presuntos
+    PI-->>MC: ibc: Decimal
+    deactivate PI
+    
+    MC->>PI: evaluarPisoProteccion(ingresoNeto, snapshot)
+    activate PI
+    Note right of PI: RF-05: si IBC menor<br/>a 1 SMMLV aplica piso
+    PI-->>MC: aplico_piso: bool
+    deactivate PI
+    
+    MC->>PI: liquidarAportes(ibc, nivel_arl, snapshot)
+    activate PI
+    Note right of PI: RF-06: Salud 12.5%<br/>Pensión 16% ARL por nivel
+    PI-->>MC: aportes: AportesIntermedios
+    deactivate PI
+    
+    MC->>PI: calcularRetencion(ingresoBruto, aportes, snapshot)
+    activate PI
+    Note right of PI: RF-07: Base=Ingreso<br/>-Salud-Pensión. Art.383 E.T.
+    PI-->>MC: retencion: Decimal
+    deactivate PI
+    
+    MC->>PI: validarConsistenciaTransversal(resultado, snapshot)
+    activate PI
+    Note right of PI: CT-01 a CT-04<br/>bloqueantes fail-fast
+    PI-->>MC: validacion: ResultadoValidacion
+    deactivate PI
+    
+    alt CT-01 a CT-04 FALLAN
+        MC-->>ML: ExcepcionCalculoInvalido(errores)
+    else CT-01 a CT-04 PASAN
+        MC-->>ML: ResultadoCalculo completo
+    end
+    
+    deactivate MC
+```
 
 #### 4.2.2 `mod-liquidacion` — Máquina de Estados
 
@@ -589,6 +718,19 @@ flowchart TB
 
 **Diagrama de Estados:**
 
+
+```mermaid
+stateDiagram-v2
+  [*] --> BORRADOR : Liquidacion creada
+  BORRADOR --> CALCULADO : calcular() \n Actor: CONTRATISTA \n [min 1 contrato ACTIVO]
+  CALCULADO --> REVISADO : aprobar() \n Actor: CONTADOR + MFA \n [contador autorizado]
+  CALCULADO --> CONFIRMADO : confirmar() \n Actor: CONTRATISTA \n [sin Contador asignado]
+  REVISADO --> CONFIRMADO : confirmar() \n Actor: CONTRATISTA
+  CALCULADO --> CALCULADO : rechazar() \n Actor: CONTADOR + MFA \n [guarda observaciones]
+  CONFIRMADO --> ARCHIVADO : archivar() \n Actor: SISTEMA automatico
+  ARCHIVADO --> [*] : Estado final solo lectura
+```
+
 #### 4.2.3 `mod-parametros` — Parámetros Normativos con Vigencia
 
 - **Patrón aplicado:** Strategy + Repository
@@ -601,6 +743,59 @@ flowchart TB
 3. `MotorCalculo.liquidarAportes()` opera con `snapshot.obtener(...)`. **Cero cambios en el código del motor.**
 
 **Diagrama de Clases:**
+
+```mermaid
+classDiagram
+  class TipoParametro {
+    <<enumeration>>
+    SMMLV
+    UVT
+    PCT_SALUD
+    PCT_PENSION
+    ARL_NIVEL_I
+    ARL_NIVEL_II
+    ARL_NIVEL_III
+    ARL_NIVEL_IV
+    ARL_NIVEL_V
+    PCT_COSTOS_CIIU
+  }
+  
+  class SnapshotBuilder {
+    -IParametroRepository parametroRepo
+    +construir(fechaReferencia: Date) SnapshotParametros
+  }
+  
+  class IParametroRepository {
+    <<interface>>
+    +obtener(tipo: TipoParametro, fechaRef: Date) Decimal
+    +obtenerTablaRetencion(fechaRef: Date) TablaRetencion
+    +obtenerCandidatosCIIU(descripcion: String) List
+    +registrarParametro(param: ParametroNormativo) void
+  }
+  
+  class ParametroRepository {
+  }
+  
+  class ParametroNormativo {
+    +UUID id
+    +TipoParametro tipo
+    +Decimal valor
+    +LocalDate fecha_vigencia_inicio
+    +LocalDate fecha_vigencia_fin
+    +String fuente_normativa
+  }
+  
+  class TablaRetencion {
+    +List tramos
+    +calcularRetencion(baseUvts: Decimal) Decimal
+  }
+  
+  IParametroRepository <|.. ParametroRepository
+  SnapshotBuilder --> IParametroRepository
+  ParametroRepository --> ParametroNormativo
+  IParametroRepository --> TablaRetencion
+```
+
 
 #### 4.2.4 `mod-historial` — Snapshot Inmutable (Patrón Memento)
 
@@ -617,6 +812,56 @@ Memento captura el estado completo en un objeto directamente legible por SQL, ap
 
 **Diagrama de Clases — `mod-historial`:**
 
+
+```mermaid
+classDiagram
+  class LiquidacionArchivada {
+    +UUID id
+    +UUID id_perfil
+    +String periodo
+    +Decimal ingreso_bruto_total
+    +Decimal ibc
+    +Decimal aporte_salud
+    +Decimal aporte_pension
+    +Decimal aporte_arl
+    +Decimal retencion_fuente
+    +UUID id_snapshot
+    +DateTime archivado_en
+  }
+
+  class SnapshotParametros {
+    +UUID id_snapshot
+    +Decimal smmlv
+    +Decimal uvt
+    +Decimal pct_salud
+    +Decimal pct_pension
+    +Decimal pct_arl_nivel_i
+    +Decimal pct_ciiu
+    +String tabla_retencion_json
+    +DateTime capturado_en
+    +obtenerArlPorNivel(nivel: String): Decimal
+  }
+
+  class IHistorialRepository {
+    <<interface>>
+    +archivar(liquidacion: Liquidacion, snapshot: SnapshotParametros) LiquidacionArchivada
+    +obtenerPorId(id: UUID): LiquidacionArchivada
+    +listarPorPerfil(idPerfil: UUID, pagina: Int): List~LiquidacionArchivada~
+    +obtenerSnapshot(idSnapshot: UUID): SnapshotParametros
+  }
+
+  class HistorialRepository {
+    -DataSource dataSource
+    +archivar(liquidacion: Liquidacion, snapshot: SnapshotParametros) LiquidacionArchivada
+    +obtenerPorId(id: UUID): LiquidacionArchivada
+    +listarPorPerfil(idPerfil: UUID, pagina: Int): List~LiquidacionArchivada~
+    +obtenerSnapshot(idSnapshot: UUID): SnapshotParametros
+  }
+
+  LiquidacionArchivada "1" --> "1" SnapshotParametros : id_snapshot FK NOT NULL
+  IHistorialRepository <|.. HistorialRepository
+```
+
 #### 4.2.5 `mod-auth` — Autenticación y Autorización
 
 - **Controles implementados:** JWT (60 min exp), RBAC middleware, MFA TOTP para `CONTADOR`.
@@ -624,6 +869,48 @@ Memento captura el estado completo en un objeto directamente legible por SQL, ap
 - `verificarPertenenciaContratista()` valida que `CONTADOR` solo accede a clientes autorizados.
 
 **Flujo de Autenticación CONTADOR con MFA:**
+
+```mermaid
+sequenceDiagram
+  actor C as CONTADOR
+  participant API as API REST
+  participant AS as AuthService
+  participant JWT as JwtTokenProvider
+  participant MFA as MfaService
+  participant DB as Base de Datos
+
+  C->>API: POST /auth/login<br>email + password
+  API->>AS: autenticar(email, password)
+  AS->>DB: obtenerUsuarioPorEmail(email)
+  DB-->>AS: usuario (rol=CONTADOR, mfa_habilitado=true)
+  AS->>AS: verificarPassword(password, hash_bcrypt)
+  
+  alt Password incorrecto
+    AS-->>API: 401 Credenciales invalidas
+    API-->>C: 401
+  else Password correcto
+    AS->>DB: crearSesionParcial(usuarioId)
+    DB-->>AS: sessionid
+    AS-->>API: SesionParcial requiere_mfa=true
+    API-->>C: 200 sessionid + requiere_mfa=true
+
+    C->>API: POST /auth/mfa<br>sessionid + codigoOtp
+    API->>AS: completarMfa(sessionid, codigoOtp)
+    AS->>MFA: validarOtp(usuarioId, codigoOtp)
+    
+    alt OTP invalido
+      MFA-->>AS: false
+      AS-->>API: 401 OTP invalido
+      API-->>C: 401
+    else OTP valido
+      AS->>JWT: generarToken(usuarioId, mfa_completado=true)
+      JWT-->>AS: tokenJwt (expira en 60 min)
+      AS->>DB: invalidarSesionParcial(sessionid)
+      AS-->>API: TokenJwt
+      API-->>C: 200 token + expira_en
+    end
+  end
+```
 
 #### 4.2.6 `mod-ciiu-asistente` — Integración LLM (Opcional)
 
@@ -638,6 +925,44 @@ Memento captura el estado completo en un objeto directamente legible por SQL, ap
 
 **Diagrama de Clases:**
 
+
+```mermaid
+classDiagram
+  class IAsistenteCIIU {
+    <<interface>>
+    +sugerirCodigos(descripcionLibre: String) List~SugerenciaCIIU~
+  }
+  class AsistenteCIIUAdapter {
+    -LlmClient llmClient
+    -IParametroRepository parametroRepo
+    +sugerirCodigos(descripcionLibre: String) List~SugerenciaCIIU~
+    -construirPrompt(descripcion: String, candidatos: List) String
+    -parsearRespuestaLlm(respuesta: String) List~SugerenciaCIIU~
+    +validarSugerencia(codigoCIIU: String) ParametroCIIU
+  }
+  class SugerenciaCIIU {
+    +String codigo_ciiu
+    +String descripcion_dian
+    +Decimal pct_costos_presuntos
+    +String justificacion_llm
+    +Boolean validado_contra_bd
+  }
+  class LlmClient {
+    <<interface>>
+    +completar(prompt: String, maxTokens: Integer) String
+  }
+  class OpenAIAdapter {
+    -String apiKey
+    -String modelo
+    +completar(prompt: String, maxTokens: Integer) String
+  }
+  IAsistenteCIIU <|.. AsistenteCIIUAdapter
+  LlmClient <|.. OpenAIAdapter
+  AsistenteCIIUAdapter --> LlmClient : usa
+  AsistenteCIIUAdapter --> IParametroRepository : consulta
+  AsistenteCIIUAdapter ..> SugerenciaCIIU : produce
+```
+
 #### 4.2.7 `mod-pdf` — Generación Idempotente
 
 - **Patrón aplicado:** Template Method
@@ -648,6 +973,40 @@ Memento captura el estado completo en un objeto directamente legible por SQL, ap
 `generar(liquidacion: LiquidacionArchivada, snapshot: SnapshotParametros)` es una función pura. Ambos objetos carecen de setters tras su persistencia. El contenido del PDF depende exclusivamente de estos parámetros inmutables, garantizando que los mismos inputs produzcan exactamente el mismo documento, sin importar la fecha de descarga ni cambios normativos posteriores. Cumple estrictamente con `RES-C04`.
 
 **Diagrama de Clases:**
+
+
+```mermaid
+classDiagram
+  class GeneradorPDF {
+    <<abstract>>
+    +generar(liquidacion, snap): ByteArray
+    #renderSeccionEncabezado(liquidacion): Seccion
+    #renderSeccionContratista(liquidacion): Seccion
+    #renderSeccionIBC(liquidacion, snap): Seccion
+    #renderSeccionAportes(liquidacion): Seccion
+    #renderSeccionRetencion(liquidacion, snap): Seccion
+    #renderSeccionParametrosSnapshot(snap): Seccion
+    #renderSeccionDisclaimer(): Seccion
+  }
+  class GeneradorPDFImpl {
+    -PdfRenderer renderer
+    +generar(liquidacion, snap): ByteArray
+    #renderSeccionEncabezado(liquidacion): Seccion
+    #renderSeccionContratista(liquidacion): Seccion
+    #renderSeccionIBC(liquidacion, snap): Seccion
+    #renderSeccionAportes(liquidacion): Seccion
+    #renderSeccionRetencion(liquidacion, snap): Seccion
+    #renderSeccionParametrosSnapshot(snap): Seccion
+    #renderSeccionDisclaimer(): Seccion
+  }
+  class IPdfRepository {
+    <<interface>>
+    +obtenerPorLiquidacion(idLiquidacion): ByteArray
+    +almacenar(idLiquidacion, contenido): void
+  }
+  GeneradorPDF <|-- GeneradorPDFImpl
+  GeneradorPDFImpl --> IPdfRepository
+```
 
 ### 4.3 Diagrama de Secuencia — Flujo Principal de Liquidación
 
@@ -661,6 +1020,95 @@ Diagrama de secuencia completo que muestra la interacción entre todos los módu
 3. Cómo las validaciones transversales `CT-01` a `CT-04` se ejecutan dentro del pipeline de cálculo.
 4. Cómo la transición de estado `CALCULADO` → `CONFIRMADO` → `ARCHIVADO` es manejada por `LiquidacionStateMachine`.
 
+
+```mermaid
+sequenceDiagram
+  participant CON as Contratista
+  participant API as API REST
+  participant AUTH as mod-auth
+  participant PERF as mod-perfil
+  participant PARAM as mod-parametros
+  participant CALC as mod-calculo
+  participant LIQ as mod-liquidacion
+  participant HIST as mod-historial
+  participant PDF as mod-pdf
+  participant DB as Base de Datos
+  participant CONT as Contador
+
+  rect rgb(255, 255, 200)
+    note over CON, CONT: FASE 1 — Inicio del periodo de liquidacion
+    CON->>API: POST /liquidaciones periodo=2025-01
+    API->>AUTH: verificarAutorizacion(token, CONTRATISTA)
+    AUTH-->>API: ClaimsJwt usuarioId rol=CONTRATISTA
+    API->>LIQ: iniciarCalculoLiquidacion(idPerfil, 2025-01, actor)
+    LIQ->>DB: crearLiquidacion estado=BORRADOR
+    DB-->>LIQ: liquidacion BORRADOR
+  end
+
+  rect rgb(255, 255, 200)
+    note over CON, CONT: FASE 2 — Preparacion del Snapshot e Input
+    LIQ->>PERF: listarContratos(idPerfil, filtro=ACTIVO)
+    PERF->>DB: SELECT contratos ACTIVOS
+    DB-->>PERF: contratos activos
+    PERF-->>LIQ: List~Contrato~
+    
+    LIQ->>PARAM: construir(fechaRef=2025-01-01)
+    PARAM->>DB: SELECT parametros normativos vigentes
+    DB-->>PARAM: smmlv uvt pct_salud pct_pension arl tabla_retencion
+    PARAM-->>LIQ: SnapshotParametros inmutable
+    
+    LIQ->>DB: persistirSnapshot(snapshot)
+    DB-->>LIQ: id_snapshot asignado
+  end
+
+  rect rgb(255, 255, 200)
+    note over CON, CONT: FASE 3 — Calculo Puro sin acceso a BD
+    LIQ->>CALC: calcularLiquidacion(inputCalculo, snapshot)
+    note right of CALC: RF-03 a RF-07 pipeline puro+CT-01 a CT-04 bloqueantes
+    
+    alt Validaciones bloqueantes fallan
+      CALC-->>LIQ: ExcepcionCalculoInvalidado
+      LIQ-->>API: 422 Error validacion
+      API-->>CON: Error con detalle
+    else Calculo exitoso
+      CALC-->>LIQ: ResultadoCalculo completo
+      LIQ->>LIQ: stateMachine transicionar(CALCULAR)
+      LIQ->>DB: UPDATE liquidacion estado=CALCULADO
+      LIQ-->>API: Liquidacion CALCULADO
+      API-->>CON: 200 ResultadoCalculo
+    end
+  end
+
+  rect rgb(255, 255, 200)
+    note over CON, CONT: FASE 4 — Aprobacion Contador con MFA
+    CONT->>API: PUT /liquidaciones/{id}/aprobar
+    API->>AUTH: verificarAutorizacion(CONTADOR, mfa=true)
+    AUTH-->>API: ClaimsJwt CONTADOR mfa_completado=true
+    API->>LIQ: aprobarLiquidacion(id, CONTADOR)
+    LIQ->>LIQ: stateMachine transicionar(APROBAR)
+    LIQ->>DB: UPDATE estado=REVISADO
+    
+    CONT->>API: PUT /liquidaciones/{id}/confirmar
+    API->>LIQ: confirmarLiquidacion(id, CONTRATISTA)
+    LIQ->>LIQ: stateMachine transicionar(CONFIRMAR)
+  end
+
+  rect rgb(255, 255, 200)
+    note over CON, CONT: FASE 5 — Archivado y PDF idempotente
+    LIQ->>HIST: archivar(liquidacion, snapshot)
+    HIST->>DB: INSERT liquidaciones_archivadas inmutable
+    DB-->>HIST: LiquidacionArchivada
+    LIQ->>LIQ: stateMachine transicionar(ARCHIVAR, SISTEMA)
+    LIQ->>DB: UPDATE estado=ARCHIVADO
+    
+    LIQ->>PDF: generar(liquidacionArchivada, snapshot)
+    note right of PDF: Template Method idempotente+Disclaimer RES-O03 obligatorio
+    PDF-->>LIQ: PDF ByteArray
+    LIQ->>DB: almacenarPDF(id, pdfBytes)
+    LIQ-->>API: LiquidacionArchivada + pdf_url
+    API-->>CON: 200 estado=ARCHIVADO
+  end
+```
 
 ### 4.4 Separación de Responsabilidades y Principios de Diseño
 
