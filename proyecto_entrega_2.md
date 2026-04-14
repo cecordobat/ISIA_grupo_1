@@ -550,6 +550,7 @@ flowchart TB
   class Calculo green;
   class CIIU yellow;
   class DB gray;
+```
 
 ### 4.2 Diseño Detallado por Módulo
 
