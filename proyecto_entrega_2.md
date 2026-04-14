@@ -492,6 +492,64 @@ El sistema **NO** utiliza LLMs en tiempo de ejecución para los cálculos normat
 
 ### 4.1 Diagrama de Componentes y Módulos
 
+#### 4.1 Diagrama de Componentes y Módulos
+
+```mermaid
+flowchart TB
+  subgraph API["API REST\nCapa de Entrada"]
+    direction TB
+    REST[API REST]
+  end
+
+  subgraph Auth["mod-auth\nAutenticación · RBAC · MFA"]
+  end
+
+  subgraph Perfil["mod-perfil\nPerfilContratista · Contratos"]
+  end
+
+  subgraph Calculo["mod-calculo\n Función Pura\nIBC · Aportes · Retención"]
+  end
+
+  subgraph Parametros["mod-parametros\nParámetros Normativos\ncon Vigencia Temporal"]
+  end
+
+  subgraph Liquidacion["mod-liquidacion\nMáquina de Estados\nOrquestador"]
+  end
+
+  subgraph PDF["mod-pdf\nGeneración Idempotente"]
+  end
+
+  subgraph Historial["mod-historial\nLiquidaciones Archivadas\nSnapshot Inmutable"]
+  end
+
+  subgraph CIIU["mod-ciiu-asistente\n⚡ Opcional\nLLM · Clasificación CIIU"]
+  end
+
+  subgraph DB["Base de Datos Relacional"]
+  end
+
+  REST --> Auth
+  REST --> Perfil
+  REST --> Liquidacion
+  Liquidacion --> Calculo
+  Liquidacion --> Parametros
+  Liquidacion --> PDF
+  Liquidacion --> Historial
+  Perfil --> CIIU
+  Parametros -.-> DB
+  PDF -.-> DB
+  Historial -.-> DB
+  CIIU -.-> DB
+  Calculo -.->|"NO accede directamente"| DB
+
+  classDef purple fill:#ede9fe,stroke:#7c3aed,stroke-width:2px;
+  classDef green fill:#d1fae5,stroke:#059669,stroke-width:2px;
+  classDef yellow fill:#fef3c7,stroke:#d97706,stroke-width:2px;
+  classDef gray fill:#f3f4f6,stroke:#6b7280,stroke-width:2px;
+  class Auth,Perfil,Parametros,Liquidacion,PDF,Historial,API purple;
+  class Calculo green;
+  class CIIU yellow;
+  class DB gray;
 
 ### 4.2 Diseño Detallado por Módulo
 
