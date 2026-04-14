@@ -491,31 +491,6 @@ El sistema **NO** utiliza LLMs en tiempo de ejecución para los cálculos normat
 ## 4. Diseño Detallado del Software
 
 ### 4.1 Diagrama de Componentes y Módulos
-```mermaid
-graph TD
-  UI[Interfaz Web] -->|HTTP/JSON| API[API REST]
-  API --> AUTH[mod-auth]
-  API --> PERF[mod-perfil]
-  API --> LIQ[mod-liquidacion]
-  
-  LIQ -->|InputCalculo + Snapshot| CALC[mod-calculo]
-  LIQ -->|consulta vigencia| PARAMS[mod-parametros]
-  LIQ -->|renderiza| PDF[mod-pdf]
-  LIQ -->|archiva| HIST[mod-historial]
-  
-  PERF -->|asiste CIIU| CIIU[mod-ciiu-asistente]
-  
-  CALC -.->|NO accede a BD| DB[(Base de Datos Relacional)]
-  PARAMS -.-> DB
-  LIQ -.-> DB
-  HIST -.-> DB
-  PERF -.-> DB
-  AUTH -.-> DB
-  
-  classDef core fill:#fff3e0,stroke:#e65100,stroke-width:2px;
-  classDef pure fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,stroke-dasharray: 5 5;
-  class LIQ,PARAMS,PDF,HIST,PERF,AUTH,CIIU core;
-  class CALC pure;
 
 
 ### 4.2 Diseño Detallado por Módulo
