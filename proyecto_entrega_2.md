@@ -341,7 +341,7 @@ graph TD
   classDef db fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px;
   class C,CO,EC,AD actor;
   class UI,API,AUTH,PERF,LIQ,CALC,PARAMS,PDF,HIST,CIIU module;
-  class DB db;
+  class DB db.
 
 
 ### 3.2 Decisiones Arquitectónicas (ADRs Simplificados)
