@@ -492,7 +492,7 @@ El sistema **NO** utiliza LLMs en tiempo de ejecución para los cálculos normat
 
 ### 4.1 Diagrama de Componentes y Módulos
 
-#### 4.1 Diagrama de Componentes y Módulos
+### 4.1 Diagrama de Componentes y Módulos
 
 ```mermaid
 flowchart TB
