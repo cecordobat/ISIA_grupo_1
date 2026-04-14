@@ -4,7 +4,7 @@
 
 | **Presentado por** | Andrés Arenas (`afarenass@unal.edu.co`) • Cristhian Córdoba (`cecordobat@unal.edu.co`) • William Robles (`willisk8707@gmail.com`) |
 |:---|:---|
-| **Profesor** | Oscar Ortíz |
+| **Profesor** | Oscar Ortíz & Diana Garcés | 
 | **Fecha** | 28 de marzo de 2026 |
 
 ---
