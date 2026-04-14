@@ -311,39 +311,6 @@ El presente documento constituye la Especificación de Requerimientos de Softwar
 ### 3.1 Visión General
 Se adopta una **arquitectura monolítica modular** organizada en capas con fronteras explícitas. Ideal para un equipo de 3 estudiantes en 4–6 semanas: reduce complejidad operacional, facilita pruebas del motor, y demuestra todos los RF sin sobrecarga distribuida. (Microservicios etiquetados como *evolución futura*).
 
-```mermaid
-graph TD
-  subgraph Actores
-    C[Contratista] --> UI
-    CO[Contador] --> UI
-    EC[Entidad Contratante] --> UI
-    AD[Administrador] --> UI
-  end
-
-  subgraph Motor de Cumplimiento Tributario
-    UI[Interfaz Web] --> API
-    API[API REST] --> AUTH[mod-auth]
-    API --> PERF[mod-perfil]
-    API --> LIQ[mod-liquidacion]
-    LIQ --> CALC[mod-calculo]
-    LIQ --> PARAMS[mod-parametros]
-    LIQ --> PDF[mod-pdf]
-    API --> HIST[mod-historial]
-    PERF --> CIIU[mod-ciiu-asistente]
-    CALC -.->|Sin acceso a BD| DB[(Base de Datos)]
-    LIQ -.->|Persistencia| DB
-    PARAMS -.-> DB
-    HIST -.-> DB
-  end
-
-  classDef actor fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
-  classDef module fill:#f3e5f5,stroke:#4a148c,stroke-width:2px;
-  classDef db fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px;
-  class C,CO,EC,AD actor;
-  class UI,API,AUTH,PERF,LIQ,CALC,PARAMS,PDF,HIST,CIIU module;
-  class DB db.
-
-
 ### 3.2 Decisiones Arquitectónicas (ADRs Simplificados)
 
 #### ADR-01 — Aislamiento del Motor de Cálculo como Módulo Puro
