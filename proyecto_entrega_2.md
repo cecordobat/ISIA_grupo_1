@@ -534,33 +534,7 @@ graph TD
 6. `validarConsistenciaTransversal(resultado, snap)` → CT-01..CT-04 (fail-fast)
 
 **Diagrama de Clases:**
-```mermaid
-classDiagram
-  class InputCalculo {
-    List~Contrato~ contratos
-    Perfil perfil
-  }
-  class SnapshotParametros {
-    Decimal smmlv, uvt
-    Decimal pct_salud, pct_pension
-    Map~nivel, Decimal~ pct_arl
-    Decimal pct_ciiu
-    String tabla_retencion_json
-  }
-  class ResultadoCalculo {
-    Decimal ibc
-    Decimal aporte_salud
-    Decimal aporte_pension
-    Decimal aporte_arl
-    Decimal base_gravable
-    Decimal retencion_fuente
-  }
-  class MotorCalculo {
-    +calcularLiquidacion(InputCalculo, SnapshotParametros) ResultadoCalculo
-  }
-  MotorCalculo ..> InputCalculo : usa
-  MotorCalculo ..> SnapshotParametros : usa
-  MotorCalculo ..> ResultadoCalculo : retorna
+
 
 #### 4.2.2 `mod-liquidacion` — Máquina de Estados
 
@@ -580,16 +554,6 @@ classDiagram
 | `CONFIRMADO` | `archivar()` | `SISTEMA` (auto) | Inmediatamente tras confirmar | `ARCHIVADO` |
 
 **Diagrama de Estados:**
-```mermaid
-stateDiagram-v2
-  [*] --> BORRADOR
-  BORRADOR --> CALCULADO : calcular() [CONTRATISTA]
-  CALCULADO --> REVISADO : aprobar() [CONTADOR + MFA]
-  CALCULADO --> CONFIRMADO : confirmar() [CONTRATISTA]
-  REVISADO --> CONFIRMADO : confirmar() [CONTRATISTA]
-  CALCULADO --> CALCULADO : rechazar() [CONTADOR + obs]
-  CONFIRMADO --> ARCHIVADO : archivar() [SISTEMA]
-  ARCHIVADO --> [*]
 
 #### 4.2.3 `mod-parametros` — Parámetros Normativos con Vigencia
 
@@ -603,33 +567,6 @@ stateDiagram-v2
 3. `MotorCalculo.liquidarAportes()` opera con `snapshot.obtener(...)`. **Cero cambios en el código del motor.**
 
 **Diagrama de Clases:**
-```mermaid
-classDiagram
-  class IParametroRepository {
-    <<interface>>
-    +obtener(tipo: String, fechaRef: Date) Decimal
-    +obtenerVigentes(fechaRef: Date) SnapshotParametros
-  }
-  class ParametroRepositoryImpl {
-    +obtener(tipo: String, fechaRef: Date) Decimal
-    +obtenerVigentes(fechaRef: Date) SnapshotParametros
-    -buscarPorTipoYVigencia(tipo, fechaRef)
-  }
-  class SnapshotBuilder {
-    +construir(fechaRef: Date) SnapshotParametros
-  }
-  class SnapshotParametros {
-    Decimal smmlv
-    Decimal uvt
-    Decimal pct_salud
-    Decimal pct_pension
-    Map~String, Decimal~ pct_arl
-    Decimal pct_ciiu
-    String tabla_retencion_json
-  }
-  IParametroRepository <|.. ParametroRepositoryImpl
-  SnapshotBuilder --> IParametroRepository : consulta
-  SnapshotBuilder ..> SnapshotParametros : ensambla
 
 #### 4.2.4 `mod-historial` — Snapshot Inmutable (Patrón Memento)
 
@@ -645,44 +582,6 @@ Memento captura el estado completo en un objeto directamente legible por SQL, ap
 3. `IHistorialRepository` aplica ISP: no expone `actualizar()` ni `eliminar()`.
 
 **Diagrama de Clases — `mod-historial`:**
-```mermaid
-classDiagram
-  class LiquidacionArchivada {
-    UUID id_liquidacion
-    String periodo
-    Decimal ibc_final
-    Decimal aporte_salud
-    Decimal aporte_pension
-    Decimal aporte_arl
-    Decimal retencion_fuente
-    UUID id_snapshot
-    +getPeriodo()
-    +getIbcFinal()
-    +getSnapshot()
-  }
-  class SnapshotParametros {
-    <<immutable>>
-    final UUID id_snapshot
-    final Decimal smmlv
-    final Decimal uvt
-    final Decimal pct_salud
-    final Decimal pct_pension
-    final Map~String, Decimal~ pct_arl
-    final Decimal pct_ciiu
-    final String tabla_retencion_json
-    final Timestamp fecha_creacion
-    +getSmmlv()
-    +getUvt()
-    +getPctSalud()
-  }
-  class IHistorialRepository {
-    <<interface>>
-    +archivar(liquidacion: LiquidacionArchivada, snapshot: SnapshotParametros)
-    +obtenerPorPeriodo(perfilId: UUID, periodo: String) LiquidacionArchivada
-    +listarHistorial(perfilId: UUID) List~LiquidacionArchivada~
-  }
-  LiquidacionArchivada "1" --> "1" SnapshotParametros : referencia inmutable (FK)
-  IHistorialRepository <|.. HistorialRepositoryImpl
 
 #### 4.2.5 `mod-auth` — Autenticación y Autorización
 
@@ -691,29 +590,6 @@ classDiagram
 - `verificarPertenenciaContratista()` valida que `CONTADOR` solo accede a clientes autorizados.
 
 **Flujo de Autenticación CONTADOR con MFA:**
-```mermaid
-sequenceDiagram
-  participant C as Contador
-  participant UI as Interfaz Web
-  participant API as API REST
-  participant AUTH as mod-auth
-  participant MFA as MfaService
-  
-  C->>UI: Ingresa credenciales
-  UI->>API: POST /auth/login
-  API->>AUTH: validarUsuario()
-  AUTH-->>API: Credenciales OK
-  AUTH->>MFA: generarChallengeTOTP()
-  MFA-->>AUTH: challenge
-  AUTH-->>UI: 200 {mfa_required: true}
-  UI->>C: Solicita código TOTP
-  C->>UI: Ingresa código 6 dígitos
-  UI->>API: POST /auth/mfa/verify
-  API->>MFA: validarTOTP(código)
-  MFA-->>API: OK
-  API->>AUTH: emitirJWT(rol=CONTADOR)
-  AUTH-->>UI: Token JWT + Claims RBAC
-  UI->>C: Sesión iniciada (MFA activo)
 
 #### 4.2.6 `mod-ciiu-asistente` — Integración LLM (Opcional)
 
@@ -727,25 +603,6 @@ sequenceDiagram
 4. Los porcentajes de costos presuntos se leen exclusivamente de la base de datos tras la confirmación del usuario, nunca de la respuesta textual del LLM.
 
 **Diagrama de Clases:**
-```mermaid
-classDiagram
-  class IAsistenteCIIU {
-    <<interface>>
-    +sugerirCodigos(descripcion: String) List~Sugerencia~
-  }
-  class LlmClient {
-    <<interface>>
-    +clasificar(prompt: String) List~String~
-  }
-  class OpenAIAdapter {
-    +clasificar(prompt: String) List~String~
-  }
-  class AsistenteCIIUImpl {
-    +validarSugerencia(codigo: String) Boolean
-  }
-  IAsistenteCIIU <|.. AsistenteCIIUImpl
-  LlmClient <|.. OpenAIAdapter
-  AsistenteCIIUImpl --> LlmClient : usa
 
 #### 4.2.7 `mod-pdf` — Generación Idempotente
 
@@ -757,34 +614,6 @@ classDiagram
 `generar(liquidacion: LiquidacionArchivada, snapshot: SnapshotParametros)` es una función pura. Ambos objetos carecen de setters tras su persistencia. El contenido del PDF depende exclusivamente de estos parámetros inmutables, garantizando que los mismos inputs produzcan exactamente el mismo documento, sin importar la fecha de descarga ni cambios normativos posteriores. Cumple estrictamente con `RES-C04`.
 
 **Diagrama de Clases:**
-```mermaid
-classDiagram
-  class GeneradorPDF {
-    <<abstract>>
-    +generar(liquidacion: LiquidacionArchivada, snapshot: SnapshotParametros) PdfDocument
-    #seccion_encabezado(perfil, periodo)
-    #seccion_ibc(ibc, costos, pct_ciiu)
-    #seccion_aportes(salud, pension, arl)
-    #seccion_retencion(base_gravable, retencion)
-    #seccion_snapshot(snapshot)
-    #seccion_disclaimer()
-  }
-  class GeneradorPDFImpl {
-    +seccion_encabezado(...)
-    +seccion_ibc(...)
-    +seccion_aportes(...)
-    +seccion_retencion(...)
-    +seccion_snapshot(...)
-    +seccion_disclaimer()
-  }
-  class PdfDocument {
-    <<immutable>>
-    final byte[] contenido
-    final String hash_sha256
-    final Timestamp fecha_generacion
-  }
-  GeneradorPDF <|.. GeneradorPDFImpl : extiende
-  GeneradorPDFImpl ..> PdfDocument : retorna
 
 ### 4.3 Diagrama de Secuencia — Flujo Principal de Liquidación
 
@@ -798,30 +627,6 @@ Diagrama de secuencia completo que muestra la interacción entre todos los módu
 3. Cómo las validaciones transversales `CT-01` a `CT-04` se ejecutan dentro del pipeline de cálculo.
 4. Cómo la transición de estado `CALCULADO` → `CONFIRMADO` → `ARCHIVADO` es manejada por `LiquidacionStateMachine`.
 
-```mermaid
-sequenceDiagram
-  participant C as Contratista
-  participant API as API REST
-  participant LIQ as mod-liquidacion
-  participant PARAM as mod-parametros
-  participant CALC as mod-calculo
-  participant PDF as mod-pdf
-  participant DB as Base de Datos
-
-  C->>API: POST /liquidacion/calcular
-  API->>LIQ: validarRol(CONTRATISTA)
-  LIQ->>PARAM: obtenerParametrosVigentes(fechaRef)
-  PARAM-->>LIQ: SnapshotParametros
-  LIQ->>CALC: calcularLiquidacion(InputCalculo, Snapshot)
-  CALC->>CALC: Pipeline: IBC → Aportes → Retención → CT-01..04
-  CALC-->>LIQ: ResultadoCalculo
-  LIQ->>LIQ: transición CALCULADO → CONFIRMADO (StateMachine)
-  LIQ->>PDF: generar(liquidacion, snapshot)
-  PDF-->>LIQ: PDF idempotente
-  LIQ->>DB: persistir Liquidacion(ARCHIVADO) + Snapshot
-  DB-->>LIQ: ACK
-  LIQ-->>API: 200 OK + PDF URL
-  API-->>C: Resumen + PDF descargable
 
 ### 4.4 Separación de Responsabilidades y Principios de Diseño
 
@@ -972,4 +777,4 @@ El documento de diseño detallado fue generado mediante un prompt estructurado c
 - [x] El diseño no contradice ningún ADR del documento de arquitectura v1.0.
 
 ---
-*Documento generado para cumplimiento de la Entrega 2 – Ingeniería de Software Asistida por IA. Universidad Nacional de Colombia. 2026.*
+*Entrega 2 – Ingeniería de Software Asistida por IA. Universidad Nacional de Colombia. 2026.*
