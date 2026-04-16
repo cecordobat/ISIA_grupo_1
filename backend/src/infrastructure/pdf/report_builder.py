@@ -10,7 +10,7 @@ Ref: RF-08, HU-07
 from __future__ import annotations
 
 import io
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from fpdf import FPDF
@@ -305,7 +305,7 @@ def generar_reporte_pdf(liquidacion: LiquidacionPeriodo) -> bytes:
     # ------------------------------------------------------------------
     # 8. PIE DE PÁGINA con timestamp
     # ------------------------------------------------------------------
-    now_utc = datetime.now(tz=timezone.utc)
+    now_utc = datetime.now(tz=UTC)
     timestamp_str = now_utc.strftime("%Y-%m-%d %H:%M:%S UTC")
 
     pdf.ln(4)

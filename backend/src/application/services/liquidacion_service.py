@@ -94,7 +94,7 @@ class LiquidacionService:
 
         # 5. Persistir resultado inmutable (APPEND-ONLY — INV-03)
         snapshot = await self._parametros_repo.get_snapshot_por_anio(anio)
-        liquidacion_orm = await self._liquidacion_repo.crear(
+        await self._liquidacion_repo.crear(
             resultado=resultado,
             perfil_id=perfil_id,
             snapshot_id=snapshot.id,  # type: ignore[union-attr]

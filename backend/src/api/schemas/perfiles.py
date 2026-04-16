@@ -4,7 +4,7 @@ Ref: context/functional_requirements.md RF-01
 """
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict
 
 from src.domain.enums import EstadoPerfil, TipoDocumento
 

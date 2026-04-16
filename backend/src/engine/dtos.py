@@ -9,7 +9,7 @@ Ref: context/invariantes.md INV-01, INV-02
 from __future__ import annotations
 
 import calendar
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 

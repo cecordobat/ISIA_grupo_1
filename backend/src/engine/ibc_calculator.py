@@ -14,6 +14,7 @@ Ref: context/business_rules.md RN-01..RN-05, RN-08
 """
 from decimal import ROUND_HALF_UP, Decimal
 
+from src.domain.enums import NivelARL
 from src.engine.dtos import (
     ContratoCalculado,
     ContratoInput,
@@ -21,7 +22,6 @@ from src.engine.dtos import (
     ParametrosNormativosDTO,
     PeriodoLiquidacion,
 )
-from src.domain.enums import NivelARL
 
 _CERO = Decimal("0")
 _CUARENTA_PCT = Decimal("0.40")

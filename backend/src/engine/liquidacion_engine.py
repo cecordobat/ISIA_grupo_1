@@ -17,7 +17,6 @@ Ref: context/invariantes.md INV-02, INV-05
      context/functional_requirements.md RF-03..RF-09
 """
 from src.domain.enums import OpcionPisoProteccion
-from src.domain.exceptions import ErrorCT04_ContratosInvalidosEnPeriodo
 from src.engine.aporte_calculator import calcular_aportes
 from src.engine.dtos import (
     ContratoInput,

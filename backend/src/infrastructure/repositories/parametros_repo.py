@@ -3,6 +3,7 @@ Repositorio de parámetros normativos.
 Obtiene SnapshotNormativo, CIIU y tabla Art. 383 con vigencia temporal.
 Ref: context/invariantes.md INV-04, RES-D01, RES-D02, RES-D03
 """
+import json
 from datetime import date
 from decimal import Decimal
 
@@ -14,7 +15,6 @@ from src.engine.dtos import ParametrosNormativosDTO, TramoRetencion
 from src.infrastructure.models.snapshot_normativo import SnapshotNormativo
 from src.infrastructure.models.tabla_ciiu import TablaParametroCIIU
 from src.infrastructure.models.tabla_retencion_383 import TablaRetencion383
-import json
 
 
 class ParametrosRepository:

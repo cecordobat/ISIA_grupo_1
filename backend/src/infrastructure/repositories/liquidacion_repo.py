@@ -7,7 +7,7 @@ Ref: context/invariantes.md INV-03, RES-C03
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.domain.exceptions import LiquidacionDuplicadaError, LiquidacionInmutableError
+from src.domain.exceptions import LiquidacionDuplicadaError
 from src.engine.dtos import LiquidacionResult
 from src.infrastructure.models.liquidacion_periodo import LiquidacionPeriodo
 

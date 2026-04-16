@@ -2,7 +2,7 @@
 Servicio de autenticación — JWT + bcrypt.
 Ref: context/non_functional_requirements.md RNF-06, Ley 1581/2012
 """
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -23,7 +23,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def crear_access_token(data: dict[str, object]) -> str:
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(
+    expire = datetime.now(UTC) + timedelta(
         minutes=settings.access_token_expire_minutes
     )
     to_encode["exp"] = expire

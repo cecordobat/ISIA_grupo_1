@@ -12,7 +12,7 @@ Ref: context/business_rules.md RN-03, RN-06, RN-08
 """
 from decimal import ROUND_HALF_UP, Decimal
 
-from src.domain.enums import NivelARL, OpcionPisoProteccion
+from src.domain.enums import OpcionPisoProteccion
 from src.engine.dtos import AportesResult, IBCResult, ParametrosNormativosDTO
 
 _DOS_DECIMALES = Decimal("0.01")

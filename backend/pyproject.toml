@@ -19,7 +19,13 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
-ignore = ["E501"]
+ignore = [
+    "E501",   # line too long — manejado por el formateador
+    "N801",   # class name convention — nombres de excepción siguen nomenclatura CT-xx del dominio
+    "N818",   # exception suffix — idem
+    "F821",   # undefined name — falso positivo en forward references de SQLAlchemy relationships
+    "E741",   # ambiguous variable name — NivelARL.I es un valor legal real (Nivel I de ARL)
+]
 
 [tool.mypy]
 python_version = "3.12"
