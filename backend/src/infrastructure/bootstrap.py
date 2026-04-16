@@ -9,7 +9,6 @@ from src.infrastructure.models.snapshot_normativo import SnapshotNormativo
 from src.infrastructure.models.tabla_ciiu import TablaParametroCIIU
 from src.infrastructure.models.tabla_retencion_383 import TablaRetencion383
 
-
 SNAPSHOTS_BASE = [
     {
         "id": str(uuid.uuid4()),
@@ -70,13 +69,55 @@ TABLA_CIIU_BASE = [
 ]
 
 TRAMOS_RETENCION_BASE = [
-    {"uvt_desde": 0, "uvt_hasta": 95, "tarifa_marginal": 0, "uvt_deduccion": 0, "vigente_desde": date(2025, 1, 1)},
-    {"uvt_desde": 95, "uvt_hasta": 150, "tarifa_marginal": 0.19, "uvt_deduccion": 95, "vigente_desde": date(2025, 1, 1)},
-    {"uvt_desde": 150, "uvt_hasta": 360, "tarifa_marginal": 0.28, "uvt_deduccion": 18, "vigente_desde": date(2025, 1, 1)},
-    {"uvt_desde": 360, "uvt_hasta": 640, "tarifa_marginal": 0.33, "uvt_deduccion": 36, "vigente_desde": date(2025, 1, 1)},
-    {"uvt_desde": 640, "uvt_hasta": 945, "tarifa_marginal": 0.35, "uvt_deduccion": 48.8, "vigente_desde": date(2025, 1, 1)},
-    {"uvt_desde": 945, "uvt_hasta": 2300, "tarifa_marginal": 0.37, "uvt_deduccion": 67.7, "vigente_desde": date(2025, 1, 1)},
-    {"uvt_desde": 2300, "uvt_hasta": None, "tarifa_marginal": 0.39, "uvt_deduccion": 113.7, "vigente_desde": date(2025, 1, 1)},
+    {
+        "uvt_desde": 0,
+        "uvt_hasta": 95,
+        "tarifa_marginal": 0,
+        "uvt_deduccion": 0,
+        "vigente_desde": date(2025, 1, 1),
+    },
+    {
+        "uvt_desde": 95,
+        "uvt_hasta": 150,
+        "tarifa_marginal": 0.19,
+        "uvt_deduccion": 95,
+        "vigente_desde": date(2025, 1, 1),
+    },
+    {
+        "uvt_desde": 150,
+        "uvt_hasta": 360,
+        "tarifa_marginal": 0.28,
+        "uvt_deduccion": 18,
+        "vigente_desde": date(2025, 1, 1),
+    },
+    {
+        "uvt_desde": 360,
+        "uvt_hasta": 640,
+        "tarifa_marginal": 0.33,
+        "uvt_deduccion": 36,
+        "vigente_desde": date(2025, 1, 1),
+    },
+    {
+        "uvt_desde": 640,
+        "uvt_hasta": 945,
+        "tarifa_marginal": 0.35,
+        "uvt_deduccion": 48.8,
+        "vigente_desde": date(2025, 1, 1),
+    },
+    {
+        "uvt_desde": 945,
+        "uvt_hasta": 2300,
+        "tarifa_marginal": 0.37,
+        "uvt_deduccion": 67.7,
+        "vigente_desde": date(2025, 1, 1),
+    },
+    {
+        "uvt_desde": 2300,
+        "uvt_hasta": None,
+        "tarifa_marginal": 0.39,
+        "uvt_deduccion": 113.7,
+        "vigente_desde": date(2025, 1, 1),
+    },
 ]
 
 
