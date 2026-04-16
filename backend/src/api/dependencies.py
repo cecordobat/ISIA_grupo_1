@@ -2,8 +2,6 @@
 Dependencias de FastAPI — autenticación y sesión de BD.
 Ref: context/non_functional_requirements.md RNF-06
 """
-from collections.abc import AsyncGenerator
-
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
