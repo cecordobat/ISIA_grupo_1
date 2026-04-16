@@ -42,7 +42,7 @@ class LiquidacionService:
         anio: int,
         mes: int,
         opcion_piso: OpcionPisoProteccion | None = None,
-    ) -> LiquidacionResult:
+    ) -> tuple[LiquidacionResult, LiquidacionPeriodo]:
         """
         Orquesta el flujo completo de liquidación para un período.
 
@@ -97,14 +97,14 @@ class LiquidacionService:
 
         # 5. Persistir resultado inmutable (APPEND-ONLY — INV-03)
         snapshot = await self._parametros_repo.get_snapshot_por_anio(anio)
-        await self._liquidacion_repo.crear(
+        liquidacion = await self._liquidacion_repo.crear(
             resultado=resultado,
             perfil_id=perfil_id,
             snapshot_id=snapshot.id,  # type: ignore[union-attr]
         )
         await self._db.commit()
 
-        return resultado
+        return resultado, liquidacion
 
     async def obtener_historial(
         self, perfil_id: str, usuario_id: str

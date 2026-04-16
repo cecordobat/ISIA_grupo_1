@@ -67,6 +67,7 @@
   display: flex;
   gap: 1rem;
   margin-top: 1.5rem;
+  flex-wrap: wrap;
 }
 
 /* Botones */
@@ -201,6 +202,10 @@
   gap: 0.4rem;
 }
 
+.field-wide {
+  grid-column: 1 / -1;
+}
+
 .field label {
   font-size: 0.875rem;
   font-weight: 600;
@@ -222,6 +227,31 @@
   outline: 2px solid #2563eb;
   outline-offset: 1px;
   border-color: #2563eb;
+}
+
+.contrato-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.contratos-lista h3 {
+  color: #374151;
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.contrato-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.contrato-detalles {
+  padding-left: 0;
+  margin-top: 0.5rem;
 }
 
 /* Opciones de Piso de Protección Social */

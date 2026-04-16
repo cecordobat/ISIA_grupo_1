@@ -41,6 +41,7 @@ class LiquidacionRequest(BaseModel):
 class LiquidacionResponse(BaseModel):
     model_config = ConfigDict(json_encoders={Decimal: str})
 
+    liquidacion_id: str
     periodo: str
     ingreso_bruto_total: str
     ibc: str
@@ -56,8 +57,12 @@ class LiquidacionResponse(BaseModel):
     ajustado_por_tope: bool
 
 
-def _resultado_a_response(resultado: LiquidacionResult) -> LiquidacionResponse:
+def _resultado_a_response(
+    resultado: LiquidacionResult,
+    liquidacion_id: str,
+) -> LiquidacionResponse:
     return LiquidacionResponse(
+        liquidacion_id=liquidacion_id,
         periodo=resultado.periodo.codigo,
         ingreso_bruto_total=str(resultado.ingreso_bruto_total),
         ibc=str(resultado.ibc),
@@ -86,7 +91,7 @@ async def calcular_liquidacion(
     """
     service = LiquidacionService(db)
     try:
-        resultado = await service.ejecutar_liquidacion(
+        resultado, liquidacion = await service.ejecutar_liquidacion(
             perfil_id=body.perfil_id,
             usuario_id=current_user.id,
             anio=body.anio,
@@ -112,7 +117,7 @@ async def calcular_liquidacion(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    return _resultado_a_response(resultado)
+    return _resultado_a_response(resultado, liquidacion.id)
 
 
 @router.get("/historial/{perfil_id}", response_model=list[dict])

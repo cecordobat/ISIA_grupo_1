@@ -13,28 +13,38 @@ export function StepSeleccionarPerfil() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [isCreating, setIsCreating] = useState(false)
+  const [newPerfil, setNewPerfil] = useState({
+    tipo_documento: 'CC',
+    numero_documento: '',
+    nombre_completo: '',
+    eps: '',
+    afp: '',
+    ciiu_codigo: '',
+  })
+  const [createError, setCreateError] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
 
   const { anio, mes, setPeriodo, avanzarPaso } = useLiquidacionStore()
 
-  useEffect(() => {
-    let cancelled = false
+  const cargarPerfiles = async () => {
     setLoading(true)
     setError(null)
+    try {
+      const data = await perfilesApi.listar()
+      setPerfiles(data)
+    } catch {
+      setError('No se pudieron cargar los perfiles. Verifique su conexión e intente nuevamente.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
-    perfilesApi
-      .listar()
-      .then((data) => {
-        if (!cancelled) {
-          setPerfiles(data)
-          setLoading(false)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setError('No se pudieron cargar los perfiles. Verifique su conexión e intente nuevamente.')
-          setLoading(false)
-        }
-      })
+  useEffect(() => {
+    let cancelled = false
+    cargarPerfiles().then(() => {
+      if (cancelled) return
+    })
 
     return () => {
       cancelled = true
@@ -65,20 +75,117 @@ export function StepSeleccionarPerfil() {
     )
   }
 
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setCreateError(null)
+    setCreating(true)
+    try {
+      await perfilesApi.crear(newPerfil)
+      setIsCreating(false)
+      cargarPerfiles()
+    } catch {
+      setCreateError('Error al crear perfil. Asegúrese de que el CIIU sea válido (ej. 6201, 6910, 6920, 7020).')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  if (isCreating) {
+    return (
+      <div className="wizard-step">
+        <h2>Crear Nuevo Perfil</h2>
+        <form onSubmit={handleCreateSubmit} className="perfil-form">
+          <div className="field">
+            <label>Tipo Documento</label>
+            <select
+              value={newPerfil.tipo_documento}
+              onChange={(e) => setNewPerfil({ ...newPerfil, tipo_documento: e.target.value })}
+            >
+              <option value="CC">CC</option>
+              <option value="CE">CE</option>
+              <option value="PEP">PEP</option>
+            </select>
+          </div>
+          <div className="field">
+            <label>Número Documento</label>
+            <input
+              required
+              value={newPerfil.numero_documento}
+              onChange={(e) => setNewPerfil({ ...newPerfil, numero_documento: e.target.value })}
+            />
+          </div>
+          <div className="field">
+            <label>Nombre Completo</label>
+            <input
+              required
+              value={newPerfil.nombre_completo}
+              onChange={(e) => setNewPerfil({ ...newPerfil, nombre_completo: e.target.value })}
+            />
+          </div>
+          <div className="field">
+            <label>EPS</label>
+            <input
+              required
+              value={newPerfil.eps}
+              onChange={(e) => setNewPerfil({ ...newPerfil, eps: e.target.value })}
+            />
+          </div>
+          <div className="field">
+            <label>AFP</label>
+            <input
+              required
+              value={newPerfil.afp}
+              onChange={(e) => setNewPerfil({ ...newPerfil, afp: e.target.value })}
+            />
+          </div>
+          <div className="field">
+            <label>Código CIIU (ej: 6201)</label>
+            <input
+              required
+              value={newPerfil.ciiu_codigo}
+              onChange={(e) => setNewPerfil({ ...newPerfil, ciiu_codigo: e.target.value })}
+            />
+          </div>
+          {createError && <div className="error-banner">{createError}</div>}
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+            <button type="submit" className="btn-primary" disabled={creating}>
+              {creating ? 'Guardando...' : 'Guardar Perfil'}
+            </button>
+            <button type="button" onClick={() => setIsCreating(false)} className="btn-secondary">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    )
+  }
+
   if (perfiles.length === 0) {
     return (
       <div className="wizard-step">
         <h2>Seleccionar Perfil</h2>
         <div className="aviso-requerido">
-          No tiene perfiles registrados. Contacte al administrador para crear un perfil de contratista.
+          No tiene perfiles registrados. Por favor, cree su perfil de contratista.
         </div>
+        <button className="btn-primary" onClick={() => setIsCreating(true)} style={{ marginTop: '1rem' }}>
+          Crear Nuevo Perfil
+        </button>
       </div>
     )
   }
 
+
+
+
+
   return (
     <div className="wizard-step">
-      <h2>Seleccionar Perfil</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2>Seleccionar Perfil</h2>
+        <button className="btn-secondary" onClick={() => setIsCreating(true)}>
+          Crear Perfil
+        </button>
+      </div>
       <p className="step-description">
         Seleccione el perfil de contratista para el cual desea realizar la liquidación:
       </p>

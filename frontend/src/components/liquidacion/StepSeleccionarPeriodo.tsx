@@ -1,17 +1,21 @@
-/**
- * Paso 2 del wizard: Selección del período (año y mes) de liquidación.
- * Llama al engine de cálculo. Si el ingreso requiere decisión de piso,
- * el backend responde con HTTP 422 y requires_piso_decision = true.
- * Ref: HU-02, RF-02, RN-06
- */
 import { useState } from 'react'
 import axios from 'axios'
 import { liquidacionesApi } from '../../api/liquidaciones'
 import { useLiquidacionStore } from '../../store/liquidacionStore'
 
 const MESES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ]
 
 const ANIO_ACTUAL = new Date().getFullYear()
@@ -38,8 +42,6 @@ export function StepSeleccionarPeriodo() {
     if (!perfilId) return
     setError(null)
     setLoading(true)
-
-    // Actualizar el store con el período seleccionado
     setPeriodo(perfilId, anioLocal, mesLocal)
 
     try {
@@ -49,31 +51,26 @@ export function StepSeleccionarPeriodo() {
         mes: mesLocal,
         opcion_piso: 'NO_APLICA',
       })
-      // Cálculo exitoso — ir directo al resultado (paso 5)
       setResultado(resultado)
-      // Avanzar hasta paso 5 (avanzar 3 pasos: de 2 a 5)
-      avanzarPaso() // → 3
-      avanzarPaso() // → 4
-      avanzarPaso() // → 5
+      avanzarPaso()
+      avanzarPaso()
+      avanzarPaso()
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.status === 422) {
         const detail = err.response.data?.detail
-        // El backend retorna requires_piso_decision: true cuando el ingreso < SMMLV
         if (detail?.requires_piso_decision === true) {
           setRequiereDecisionPiso(true)
-          avanzarPaso() // → paso 3 (Piso de Protección Social)
+          avanzarPaso()
           return
         }
-        // Otro error de validación de dominio
-        const msg = detail?.message ?? detail ?? 'Error de validación en los datos ingresados.'
-        setError(typeof msg === 'string' ? msg : 'Error de validación en los datos ingresados.')
+        const msg = detail?.message ?? detail ?? 'Error de validacion en los datos ingresados.'
+        setError(typeof msg === 'string' ? msg : 'Error de validacion en los datos ingresados.')
       } else if (axios.isAxiosError(err) && err.response?.status === 409) {
-        // Conflicto: liquidación duplicada
-        setError('Ya existe una liquidación para este período. Seleccione un período diferente.')
+        setError('Ya existe una liquidacion para este periodo. Seleccione un periodo diferente.')
       } else if (axios.isAxiosError(err) && err.response?.status === 404) {
         setError('El perfil seleccionado no fue encontrado. Regrese al paso anterior.')
       } else {
-        setError('Error al conectar con el servidor. Verifique su conexión e intente nuevamente.')
+        setError('Error al conectar con el servidor. Verifique su conexion e intente nuevamente.')
       }
     } finally {
       setLoading(false)
@@ -82,14 +79,14 @@ export function StepSeleccionarPeriodo() {
 
   return (
     <div className="wizard-step">
-      <h2>Elegir Período</h2>
+      <h2>Elegir Periodo</h2>
       <p className="step-description">
-        Seleccione el año y mes para el cual desea calcular la liquidación:
+        Seleccione el ano y mes para el cual desea calcular la liquidacion:
       </p>
 
       <div className="periodo-form">
         <div className="field">
-          <label htmlFor="anio">Año</label>
+          <label htmlFor="anio">Ano</label>
           <select
             id="anio"
             value={anioLocal}
@@ -97,7 +94,9 @@ export function StepSeleccionarPeriodo() {
             disabled={loading}
           >
             {ANIOS.map((a) => (
-              <option key={a} value={a}>{a}</option>
+              <option key={a} value={a}>
+                {a}
+              </option>
             ))}
           </select>
         </div>
@@ -111,7 +110,9 @@ export function StepSeleccionarPeriodo() {
             disabled={loading}
           >
             {MESES.map((nombre, idx) => (
-              <option key={idx + 1} value={idx + 1}>{nombre}</option>
+              <option key={idx + 1} value={idx + 1}>
+                {nombre}
+              </option>
             ))}
           </select>
         </div>
@@ -120,18 +121,10 @@ export function StepSeleccionarPeriodo() {
       {error && <div className="error-banner">{error}</div>}
 
       <div className="wizard-actions">
-        <button
-          className="btn-secondary"
-          onClick={retrocederPaso}
-          disabled={loading}
-        >
-          Atrás
+        <button className="btn-secondary" onClick={retrocederPaso} disabled={loading}>
+          Atras
         </button>
-        <button
-          className="btn-primary"
-          onClick={handleCalcular}
-          disabled={loading}
-        >
+        <button className="btn-primary" onClick={handleCalcular} disabled={loading}>
           {loading ? 'Calculando...' : 'Calcular'}
         </button>
       </div>

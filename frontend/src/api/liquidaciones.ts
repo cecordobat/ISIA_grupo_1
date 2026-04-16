@@ -12,6 +12,7 @@ export interface LiquidacionRequest {
 
 /** Los valores monetarios son strings (Decimal serializado desde Python). */
 export interface LiquidacionResponse {
+  liquidacion_id: string
   periodo: string
   ingreso_bruto_total: string
   ibc: string
@@ -44,6 +45,13 @@ export const liquidacionesApi = {
 
   historial: async (perfilId: string): Promise<HistorialItem[]> => {
     const { data } = await apiClient.get<HistorialItem[]>(`/liquidaciones/historial/${perfilId}`)
+    return data
+  },
+
+  descargarPdf: async (liquidacionId: string): Promise<Blob> => {
+    const { data } = await apiClient.get(`/liquidaciones/${liquidacionId}/pdf`, {
+      responseType: 'blob',
+    })
     return data
   },
 }
