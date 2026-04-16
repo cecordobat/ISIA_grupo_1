@@ -6,18 +6,18 @@ SMMLV 2025: $1.423.500 — UVT 2025: $49.799
 Ref: context/invariantes.md INV-04 — los tests usan estos valores explícitos,
      nunca hardcodeados en el código de producción.
 """
-import pytest
 from datetime import date
 from decimal import Decimal
 
-from src.domain.enums import NivelARL, OpcionPisoProteccion
+import pytest
+
+from src.domain.enums import NivelARL
 from src.engine.dtos import (
     ContratoInput,
     ParametrosNormativosDTO,
     PeriodoLiquidacion,
     TramoRetencion,
 )
-
 
 # ─── Constantes del snapshot normativo 2025 ────────────────────────────────────
 SMMLV_2025 = Decimal("1423500")

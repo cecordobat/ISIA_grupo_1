@@ -4,16 +4,16 @@ Tests del motor de liquidación completo (flujo INV-05).
 Estos son los tests más importantes del sistema. Verifican el pipeline completo
 con escenarios realistas basados en los casos de la UGPP.
 """
-import pytest
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
 from src.domain.enums import NivelARL, OpcionPisoProteccion
 from src.domain.exceptions import (
-    ErrorCT01_IBCFueraDeRango,
     PisoProteccionRequeridoError,
 )
-from src.engine.dtos import ContratoInput, PeriodoLiquidacion
+from src.engine.dtos import ContratoInput
 from src.engine.liquidacion_engine import calcular
 
 

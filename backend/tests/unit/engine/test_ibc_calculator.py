@@ -7,12 +7,13 @@ Cubre: RN-01 (regla 40%), RN-02 (costos presuntos CIIU),
 IMPORTANTE: Todos los valores monetarios son Decimal con string literal.
             Se verifica el resultado exacto, no aproximado.
 """
-import pytest
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
 from src.domain.enums import NivelARL
-from src.engine.dtos import ContratoInput, PeriodoLiquidacion
+from src.engine.dtos import ContratoInput
 from src.engine.ibc_calculator import (
     calcular_dias_cotizados,
     calcular_ibc_consolidado,

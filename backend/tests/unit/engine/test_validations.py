@@ -4,11 +4,12 @@ Tests de las validaciones CT-01 a CT-04.
 Verifica que cada CT bloquea correctamente cuando los datos son inválidos
 y pasa correctamente cuando los datos son válidos.
 """
-import pytest
 from datetime import date
 from decimal import Decimal
 
-from src.domain.enums import NivelARL, OpcionPisoProteccion
+import pytest
+
+from src.domain.enums import NivelARL
 from src.domain.exceptions import (
     ErrorCT01_IBCFueraDeRango,
     ErrorCT03_BaseGravableIncorrecta,

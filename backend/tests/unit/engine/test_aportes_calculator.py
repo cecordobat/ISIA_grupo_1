@@ -5,8 +5,9 @@ Cubre: RN-03 (Salud 12.5%, Pensión 16%, ARL por nivel)
        RN-06 (Piso de Protección Social — BEPS 15%)
        CT-02 (tolerancia $1 COP en suma de aportes)
 """
-import pytest
 from decimal import Decimal
+
+import pytest
 
 from src.domain.enums import NivelARL, OpcionPisoProteccion
 from src.engine.aporte_calculator import calcular_aportes
@@ -127,7 +128,6 @@ class TestConsistenciaCT02:
 
     def test_diferencia_mayor_1_cop_lanza_ct02(self, parametros_2025):
         """CT-02 falla si la suma de aportes difiere del cálculo directo en > $1 COP."""
-        from decimal import ROUND_HALF_UP
         from src.domain.exceptions import ErrorCT02_SumaAportesInconsistente
         from src.engine.validations import validar_ct02_suma_aportes
 
