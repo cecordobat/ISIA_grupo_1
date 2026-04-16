@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.eggs/
+*.db
+*.db-shm
+*.db-wal
+
+# Tests y cobertura
+.coverage
+coverage.xml
+.pytest_cache/
+htmlcov/
+
+# Alembic
+alembic/versions/__pycache__/
+
+# Variables de entorno
+.env
+.env.local
+.env.*.local
+
+# Node / Frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/plugins/
