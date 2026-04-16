@@ -1,0 +1,17 @@
+[
+  {"codigo_ciiu": "6201", "descripcion": "Actividades de programación informática", "pct_costos_presuntos": "0.2700", "vigente_desde": "2020-01-01"},
+  {"codigo_ciiu": "6202", "descripcion": "Actividades de consultoría informática y gestión de instalaciones informáticas", "pct_costos_presuntos": "0.2700", "vigente_desde": "2020-01-01"},
+  {"codigo_ciiu": "7490", "descripcion": "Otras actividades profesionales, científicas y técnicas", "pct_costos_presuntos": "0.2700", "vigente_desde": "2020-01-01"},
+  {"codigo_ciiu": "6910", "descripcion": "Actividades jurídicas", "pct_costos_presuntos": "0.2700", "vigente_desde": "2020-01-01"},
+  {"codigo_ciiu": "6920", "descripcion": "Actividades de contabilidad, teneduría de libros, auditoría financiera y asesoría tributaria", "pct_costos_presuntos": "0.2700", "vigente_desde": "2020-01-01"},
+  {"codigo_ciiu": "7010", "descripcion": "Actividades de administración empresarial", "pct_costos_presuntos": "0.2700", "vigente_desde": "2020-01-01"},
+  {"codigo_ciiu": "7020", "descripcion": "Actividades de consultoría de gestión empresarial", "pct_costos_presuntos": "0.2700", "vigente_desde": "2020-01-01"},
+  {"codigo_ciiu": "7110", "descripcion": "Actividades de arquitectura e ingeniería y otras actividades conexas de consultoría técnica", "pct_costos_presuntos": "0.4000", "vigente_desde": "2020-01-01"},
+  {"codigo_ciiu": "8621", "descripcion": "Actividades de la práctica médica, sin internación", "pct_costos_presuntos": "0.2500", "vigente_desde": "2020-01-01"},
+  {"codigo_ciiu": "8622", "descripcion": "Actividades de la práctica odontológica", "pct_costos_presuntos": "0.2500", "vigente_desde": "2020-01-01"},
+  {"codigo_ciiu": "8630", "descripcion": "Actividades de atención de la salud humana", "pct_costos_presuntos": "0.2500", "vigente_desde": "2020-01-01"},
+  {"codigo_ciiu": "8541", "descripcion": "Educación técnica y tecnológica", "pct_costos_presuntos": "0.2700", "vigente_desde": "2020-01-01"},
+  {"codigo_ciiu": "9000", "descripcion": "Actividades creativas, artísticas y de entretenimiento", "pct_costos_presuntos": "0.2500", "vigente_desde": "2020-01-01"},
+  {"codigo_ciiu": "4110", "descripcion": "Construcción de edificios residenciales", "pct_costos_presuntos": "0.4000", "vigente_desde": "2020-01-01"},
+  {"codigo_ciiu": "4290", "descripcion": "Construcción de otras obras de ingeniería civil", "pct_costos_presuntos": "0.4000", "vigente_desde": "2020-01-01"}
+]

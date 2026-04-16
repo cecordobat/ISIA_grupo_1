@@ -1,0 +1,51 @@
+[
+  {
+    "uvt_desde": "0",
+    "uvt_hasta": "95",
+    "tarifa_marginal": "0.0000",
+    "uvt_deduccion": "0.00",
+    "vigente_desde": "2025-01-01"
+  },
+  {
+    "uvt_desde": "95",
+    "uvt_hasta": "150",
+    "tarifa_marginal": "0.1900",
+    "uvt_deduccion": "95.00",
+    "vigente_desde": "2025-01-01"
+  },
+  {
+    "uvt_desde": "150",
+    "uvt_hasta": "360",
+    "tarifa_marginal": "0.2800",
+    "uvt_deduccion": "18.00",
+    "vigente_desde": "2025-01-01"
+  },
+  {
+    "uvt_desde": "360",
+    "uvt_hasta": "640",
+    "tarifa_marginal": "0.3300",
+    "uvt_deduccion": "36.00",
+    "vigente_desde": "2025-01-01"
+  },
+  {
+    "uvt_desde": "640",
+    "uvt_hasta": "945",
+    "tarifa_marginal": "0.3500",
+    "uvt_deduccion": "48.80",
+    "vigente_desde": "2025-01-01"
+  },
+  {
+    "uvt_desde": "945",
+    "uvt_hasta": "2300",
+    "tarifa_marginal": "0.3700",
+    "uvt_deduccion": "67.70",
+    "vigente_desde": "2025-01-01"
+  },
+  {
+    "uvt_desde": "2300",
+    "uvt_hasta": null,
+    "tarifa_marginal": "0.3900",
+    "uvt_deduccion": "113.70",
+    "vigente_desde": "2025-01-01"
+  }
+]

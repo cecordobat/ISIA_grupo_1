@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import src.api.main\")",
+      "Bash(python -m pip install -q email-validator)",
+      "Bash(python -c \"from src.api.main import app; print\\('OK'\\)\")"
+    ]
+  }
+}

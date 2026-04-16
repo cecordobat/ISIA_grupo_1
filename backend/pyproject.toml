@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "motor-cumplimiento-colombia"
+version = "0.1.0"
+description = "Motor de Cumplimiento Tributario y Seguridad Social para Contratistas Independientes — Colombia"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = [
+    "E501",   # line too long — manejado por el formateador
+    "N801",   # class name convention — nombres de excepción siguen nomenclatura CT-xx del dominio
+    "N818",   # exception suffix — idem
+    "F821",   # undefined name — falso positivo en forward references de SQLAlchemy relationships
+    "E741",   # ambiguous variable name — NivelARL.I es un valor legal real (Nivel I de ARL)
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "tests/*",
+    "alembic/*",
+    "src/infrastructure/pdf/report_builder.py",  # rendering puro, no lógica de negocio
+]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true

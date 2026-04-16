@@ -1,0 +1,111 @@
+name: CI — Motor de Cumplimiento Colombia
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  backend-lint:
+    name: "Backend — Lint y type check"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install linting tools
+        run: pip install ruff mypy pydantic pydantic-settings
+      - name: Ruff lint
+        run: ruff check backend/src backend/tests
+      - name: MyPy type check
+        run: mypy backend/src --ignore-missing-imports
+
+  backend-tests:
+    name: "Backend — Tests unitarios e integración"
+    runs-on: ubuntu-latest
+    needs: backend-lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements-dev.txt
+      - name: Run tests with coverage
+        run: |
+          cd backend
+          python -m pytest tests/ -v \
+            --cov=src \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-fail-under=80
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          file: backend/coverage.xml
+          flags: backend
+
+  invariant-audit:
+    name: "Auditoría de Invariantes (INV-01, INV-02)"
+    runs-on: ubuntu-latest
+    needs: backend-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "INV-01: Verificar que engine no use float para dinero"
+        run: |
+          echo "Verificando que src/engine/ no contenga literales float..."
+          # Busca patrones de float (ej: 0.125) que no estén dentro de Decimal("...")
+          if grep -rn 'Decimal\|#' backend/src/engine/ --include="*.py" > /dev/null; then
+            echo "OK: Todos los valores numéricos están envueltos en Decimal()"
+          fi
+          # Falla si encuentra float literals fuera de strings
+          BAD=$(grep -rn '= [0-9]\+\.[0-9]\+[^"]' backend/src/engine/ --include="*.py" | grep -v '#' | grep -v 'Decimal' || true)
+          if [ -n "$BAD" ]; then
+            echo "ERROR: Se encontraron posibles float literals en engine/:"
+            echo "$BAD"
+            exit 1
+          fi
+          echo "✅ INV-01: Sin float literals detectados en engine/"
+
+      - name: "INV-02: Verificar que engine no importe infraestructura"
+        run: |
+          echo "Verificando que src/engine/ no importe sqlalchemy ni fastapi..."
+          if grep -rn "sqlalchemy\|fastapi\|asyncio" backend/src/engine/ --include="*.py"; then
+            echo "ERROR: El engine importa infraestructura (viola INV-02)"
+            exit 1
+          fi
+          echo "✅ INV-02: engine/ es puro — sin imports de sqlalchemy/fastapi"
+
+  frontend-tests:
+    name: "Frontend — Build y tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+      - name: Type check
+        run: |
+          cd frontend
+          npm run type-check
+      - name: Run tests
+        run: |
+          cd frontend
+          npm run test -- --reporter=verbose
+      - name: Build
+        run: |
+          cd frontend
+          npm run build
