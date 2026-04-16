@@ -10,7 +10,7 @@ Responsabilidades:
 
 Ref: context/invariantes.md INV-02 (engine puro), INV-05 (orden)
 """
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +19,7 @@ from src.domain.enums import NivelARL, OpcionPisoProteccion
 from src.domain.exceptions import AccesoNoAutorizadoError, ContratistaNoEncontradoError
 from src.engine.dtos import ContratoInput, LiquidacionResult, PeriodoLiquidacion
 from src.engine.liquidacion_engine import calcular
+from src.infrastructure.models.liquidacion_periodo import LiquidacionPeriodo
 from src.infrastructure.repositories.contrato_repo import ContratoRepository
 from src.infrastructure.repositories.liquidacion_repo import LiquidacionRepository
 from src.infrastructure.repositories.parametros_repo import ParametrosRepository
@@ -79,7 +80,9 @@ class LiquidacionService:
                 valor_bruto_mensual=Decimal(str(c.valor_bruto_mensual)),
                 nivel_arl=NivelARL(c.nivel_arl.value if hasattr(c.nivel_arl, 'value') else c.nivel_arl),
                 fecha_inicio=c.fecha_inicio,
-                fecha_fin=c.fecha_fin,
+                fecha_fin=c.fecha_fin if c.fecha_fin is not None else (
+                    date(anio + (mes // 12), mes % 12 + 1, 1) - timedelta(days=1)
+                ),
             )
             for c in contratos_orm
         ]
@@ -105,7 +108,7 @@ class LiquidacionService:
 
     async def obtener_historial(
         self, perfil_id: str, usuario_id: str
-    ) -> list[object]:
+    ) -> list["LiquidacionPeriodo"]:
         """Retorna el historial de liquidaciones del contratista."""
         perfil = await self._perfil_repo.get_por_id(perfil_id)
         if perfil is None:

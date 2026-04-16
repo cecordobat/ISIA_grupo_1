@@ -134,12 +134,14 @@ async def historial(
             "periodo": liq.periodo,
             "ibc": str(liq.ibc),
             "total_aportes": str(
-                float(liq.aporte_salud) + float(liq.aporte_pension) + float(liq.aporte_arl)
+                Decimal(str(liq.aporte_salud))
+                + Decimal(str(liq.aporte_pension))
+                + Decimal(str(liq.aporte_arl))
             ),
             "retencion_fuente": str(liq.retencion_fuente),
             "generado_en": liq.generado_en.isoformat(),
         }
-        for liq in liquidaciones  # type: ignore[union-attr]
+        for liq in liquidaciones
     ]
 
 
