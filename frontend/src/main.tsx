@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { LoginPage } from './pages/LoginPage'
+import { LiquidacionWizardPage } from './pages/LiquidacionWizardPage'
 import { useAuthStore } from './store/authStore'
 
 const queryClient = new QueryClient({
@@ -14,16 +15,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />
 }
 
-// Página placeholder para liquidación (se implementará como wizard completo)
-function LiquidacionPage() {
-  const logout = useAuthStore((s) => s.logout)
-  return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Motor de Cumplimiento — Dashboard</h1>
-      <p>Bienvenido. El wizard de liquidación está disponible en esta sección.</p>
-      <button onClick={logout}>Cerrar sesión</button>
-    </div>
-  )
+function RootRedirect() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  return <Navigate to={isAuthenticated ? '/liquidacion' : '/login'} replace />
 }
 
 createRoot(document.getElementById('root')!).render(
@@ -31,12 +25,13 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<RootRedirect />} />
           <Route path="/login" element={<LoginPage />} />
           <Route
             path="/liquidacion"
             element={
               <ProtectedRoute>
-                <LiquidacionPage />
+                <LiquidacionWizardPage />
               </ProtectedRoute>
             }
           />

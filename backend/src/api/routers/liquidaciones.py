@@ -2,12 +2,15 @@
 Router de liquidaciones — el endpoint principal del sistema.
 POST /liquidaciones/calcular
 GET  /liquidaciones/historial/{perfil_id}
+GET  /liquidaciones/{liquidacion_id}/pdf
 """
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, ConfigDict, field_serializer
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.api.dependencies import get_current_user
 from src.application.services.liquidacion_service import LiquidacionService
@@ -21,7 +24,9 @@ from src.domain.exceptions import (
 from src.domain.exceptions import ValidationError as DomainValidationError
 from src.engine.dtos import LiquidacionResult
 from src.infrastructure.database import get_db
+from src.infrastructure.models.liquidacion_periodo import LiquidacionPeriodo
 from src.infrastructure.models.usuario import Usuario
+from src.infrastructure.pdf.report_builder import generar_reporte_pdf
 
 router = APIRouter(prefix="/liquidaciones", tags=["liquidaciones"])
 
@@ -136,3 +141,46 @@ async def historial(
         }
         for liq in liquidaciones  # type: ignore[union-attr]
     ]
+
+
+@router.get("/{liquidacion_id}/pdf")
+async def descargar_pdf(
+    liquidacion_id: str,
+    current_user: Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    """
+    Genera y descarga el reporte PDF de una liquidación específica.
+    Requiere autenticación JWT. Solo el dueño del perfil puede descargar su reporte.
+    Ref: RF-08, HU-07
+    """
+    # Cargar la liquidación junto con su perfil (para verificar propiedad)
+    result = await db.execute(
+        select(LiquidacionPeriodo)
+        .where(LiquidacionPeriodo.id == liquidacion_id)
+        .options(selectinload(LiquidacionPeriodo.perfil))
+    )
+    liquidacion: LiquidacionPeriodo | None = result.scalar_one_or_none()
+
+    if liquidacion is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Liquidación '{liquidacion_id}' no encontrada.",
+        )
+
+    # Verificar que la liquidación pertenece al usuario autenticado
+    if liquidacion.perfil.usuario_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tiene permiso para acceder a esta liquidación.",
+        )
+
+    pdf_bytes = generar_reporte_pdf(liquidacion)
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=liquidacion_{liquidacion_id}.pdf"
+        },
+    )
