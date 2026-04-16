@@ -5,7 +5,7 @@ import { useAuthStore } from '../store/authStore'
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const setToken = useAuthStore((s) => s.setToken)
+  const setSession = useAuthStore((s) => s.setSession)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -16,11 +16,11 @@ export function LoginPage() {
     setError(null)
     setLoading(true)
     try {
-      const { access_token } = await authApi.login(email, password)
-      setToken(access_token)
-      navigate('/liquidacion')
+      const { access_token, rol } = await authApi.login(email, password)
+      setSession(access_token, rol)
+      navigate(rol === 'CONTADOR' ? '/contador' : '/liquidacion')
     } catch {
-      setError('Email o contraseña incorrectos. Verifique sus datos.')
+      setError('Email o contrasena incorrectos. Verifique sus datos.')
     } finally {
       setLoading(false)
     }
@@ -30,7 +30,7 @@ export function LoginPage() {
     <div className="auth-container">
       <div className="auth-card">
         <h1>Motor de Cumplimiento</h1>
-        <p className="subtitle">Colombia — Autoliquidación de Aportes y Retenciones</p>
+        <p className="subtitle">Colombia - Autoliquidacion de Aportes y Retenciones</p>
         <form onSubmit={handleSubmit}>
           <div className="field">
             <label htmlFor="email">Email</label>
@@ -44,7 +44,7 @@ export function LoginPage() {
             />
           </div>
           <div className="field">
-            <label htmlFor="password">Contraseña</label>
+            <label htmlFor="password">Contrasena</label>
             <input
               id="password"
               type="password"
@@ -59,11 +59,7 @@ export function LoginPage() {
           </button>
         </form>
         <p style={{ marginTop: '1rem', textAlign: 'center' }}>
-          ¿No tienes cuenta? <Link to="/register">Regístrate aquí</Link>
-        </p>
-        <p className="disclaimer">
-          ⚠️ Esta herramienta es de asistencia y no reemplaza el criterio de un asesor
-          contable o tributario certificado. (RES-O03)
+          No tienes cuenta? <Link to="/register">Registrate aqui</Link>
         </p>
       </div>
     </div>

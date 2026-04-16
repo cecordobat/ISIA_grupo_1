@@ -1,14 +1,17 @@
 import { apiClient } from './client'
+import type { RolUsuario } from '../store/authStore'
 
 export interface LoginResponse {
   access_token: string
   token_type: string
+  rol: RolUsuario
 }
 
 export interface RegisterRequest {
   email: string
   password: string
   nombre_completo: string
+  rol: RolUsuario
 }
 
 export const authApi = {

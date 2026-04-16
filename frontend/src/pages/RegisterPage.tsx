@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { authApi } from '../api/auth'
-import { useAuthStore } from '../store/authStore'
+import { useAuthStore, type RolUsuario } from '../store/authStore'
 
 export function RegisterPage() {
   const navigate = useNavigate()
-  const setToken = useAuthStore((s) => s.setToken)
+  const setSession = useAuthStore((s) => s.setSession)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [nombreCompleto, setNombreCompleto] = useState('')
+  const [rol, setRol] = useState<RolUsuario>('CONTRATISTA')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -17,15 +18,16 @@ export function RegisterPage() {
     setError(null)
     setLoading(true)
     try {
-      const { access_token } = await authApi.register({
+      const { access_token, rol: rolRespuesta } = await authApi.register({
         email,
         password,
         nombre_completo: nombreCompleto,
+        rol,
       })
-      setToken(access_token)
-      navigate('/liquidacion')
+      setSession(access_token, rolRespuesta)
+      navigate(rolRespuesta === 'CONTADOR' ? '/contador' : '/liquidacion')
     } catch {
-      setError('Error al registrar la cuenta. Es posible que el correo ya esté en uso.')
+      setError('Error al registrar la cuenta. Es posible que el correo ya este en uso.')
     } finally {
       setLoading(false)
     }
@@ -35,7 +37,7 @@ export function RegisterPage() {
     <div className="auth-container">
       <div className="auth-card">
         <h1>Registro</h1>
-        <p className="subtitle">Motor de Cumplimiento — Crear nueva cuenta</p>
+        <p className="subtitle">Motor de Cumplimiento - Crear nueva cuenta</p>
         <form onSubmit={handleSubmit}>
           <div className="field">
             <label htmlFor="nombre">Nombre Completo</label>
@@ -49,6 +51,13 @@ export function RegisterPage() {
             />
           </div>
           <div className="field">
+            <label htmlFor="rol">Tipo de cuenta</label>
+            <select id="rol" value={rol} onChange={(e) => setRol(e.target.value as RolUsuario)}>
+              <option value="CONTRATISTA">Contratista</option>
+              <option value="CONTADOR">Contador</option>
+            </select>
+          </div>
+          <div className="field">
             <label htmlFor="email">Email</label>
             <input
               id="email"
@@ -59,7 +68,7 @@ export function RegisterPage() {
             />
           </div>
           <div className="field">
-            <label htmlFor="password">Contraseña</label>
+            <label htmlFor="password">Contrasena</label>
             <input
               id="password"
               type="password"
@@ -74,11 +83,7 @@ export function RegisterPage() {
           </button>
         </form>
         <p style={{ marginTop: '1rem', textAlign: 'center' }}>
-          ¿Ya tienes cuenta? <Link to="/login">Inicia sesión aquí</Link>
-        </p>
-        <p className="disclaimer">
-          ⚠️ Esta herramienta es de asistencia y no reemplaza el criterio de un asesor
-          contable o tributario certificado. (RES-O03)
+          Ya tienes cuenta? <Link to="/login">Inicia sesion aqui</Link>
         </p>
       </div>
     </div>

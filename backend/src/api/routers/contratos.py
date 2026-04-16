@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.dependencies import get_current_user
-from src.api.schemas.contratos import ContratoCreate, ContratoResponse
+from src.api.schemas.contratos import ContratoCreate, ContratoResponse, ContratoUpdate
 from src.infrastructure.database import get_db
 from src.infrastructure.models.contrato import Contrato
 from src.infrastructure.models.perfil_contratista import PerfilContratista
@@ -106,3 +106,39 @@ async def eliminar_contrato(
 
     await db.delete(contrato)
     await db.commit()
+
+
+@router.put("/{contrato_id}", response_model=ContratoResponse)
+async def actualizar_contrato(
+    contrato_id: str,
+    body: ContratoUpdate,
+    current_user: Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ContratoResponse:
+    result = await db.execute(
+        select(Contrato)
+        .join(PerfilContratista, Contrato.perfil_id == PerfilContratista.id)
+        .where(
+            Contrato.id == contrato_id,
+            PerfilContratista.usuario_id == current_user.id,
+        )
+    )
+    contrato = result.scalar_one_or_none()
+    if contrato is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Contrato no encontrado.",
+        )
+
+    repo = ContratoRepository(db)
+    await repo.actualizar(
+        contrato,
+        entidad_contratante=body.entidad_contratante,
+        valor_bruto_mensual=body.valor_bruto_mensual,
+        nivel_arl=body.nivel_arl,
+        fecha_inicio=body.fecha_inicio,
+        fecha_fin=body.fecha_fin,
+    )
+    await db.commit()
+    await db.refresh(contrato)
+    return ContratoResponse.model_validate(contrato)

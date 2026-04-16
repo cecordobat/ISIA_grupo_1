@@ -57,3 +57,13 @@ class LiquidacionPeriodo(Base):
         "PerfilContratista", back_populates="liquidaciones"
     )
     snapshot: Mapped["SnapshotNormativo"] = relationship("SnapshotNormativo")  # type: ignore[name-defined]
+    revision: Mapped["LiquidacionRevision | None"] = relationship(  # type: ignore[name-defined]
+        "LiquidacionRevision",
+        back_populates="liquidacion",
+        uselist=False,
+    )
+    confirmacion: Mapped["LiquidacionConfirmacion | None"] = relationship(  # type: ignore[name-defined]
+        "LiquidacionConfirmacion",
+        back_populates="liquidacion",
+        uselist=False,
+    )

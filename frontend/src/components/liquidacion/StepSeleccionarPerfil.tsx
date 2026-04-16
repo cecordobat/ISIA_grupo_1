@@ -1,12 +1,20 @@
-/**
- * Paso 1 del wizard: Selección del perfil de contratista a liquidar.
- * Carga los perfiles del usuario autenticado y permite seleccionar uno.
- * Ref: HU-01, RF-01
- */
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import axios from 'axios'
 import { perfilesApi } from '../../api/perfiles'
-import type { PerfilResponse } from '../../api/perfiles'
+import { contadorApi } from '../../api/contador'
+import type { PerfilCreate, PerfilResponse } from '../../api/perfiles'
+import { HistorialLiquidaciones } from './HistorialLiquidaciones'
 import { useLiquidacionStore } from '../../store/liquidacionStore'
+
+const emptyPerfilForm: PerfilCreate = {
+  tipo_documento: 'CC',
+  numero_documento: '',
+  nombre_completo: '',
+  eps: '',
+  afp: '',
+  ciiu_codigo: '',
+  confirmar_ciiu_alto: false,
+}
 
 export function StepSeleccionarPerfil() {
   const [perfiles, setPerfiles] = useState<PerfilResponse[]>([])
@@ -14,15 +22,12 @@ export function StepSeleccionarPerfil() {
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
-  const [newPerfil, setNewPerfil] = useState({
-    tipo_documento: 'CC',
-    numero_documento: '',
-    nombre_completo: '',
-    eps: '',
-    afp: '',
-    ciiu_codigo: '',
-  })
+  const [editingPerfilId, setEditingPerfilId] = useState<string | null>(null)
+  const [contadorEmail, setContadorEmail] = useState('')
+  const [shareMessage, setShareMessage] = useState<string | null>(null)
+  const [newPerfil, setNewPerfil] = useState<PerfilCreate>(emptyPerfilForm)
   const [createError, setCreateError] = useState<string | null>(null)
+  const [createWarning, setCreateWarning] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
 
   const { anio, mes, setPeriodo, avanzarPaso } = useLiquidacionStore()
@@ -33,28 +38,98 @@ export function StepSeleccionarPerfil() {
     try {
       const data = await perfilesApi.listar()
       setPerfiles(data)
+      setSelectedId((current) => current ?? data[0]?.id ?? null)
     } catch {
-      setError('No se pudieron cargar los perfiles. Verifique su conexión e intente nuevamente.')
+      setError('No se pudieron cargar los perfiles. Verifique su conexion e intente nuevamente.')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    let cancelled = false
-    cargarPerfiles().then(() => {
-      if (cancelled) return
-    })
-
-    return () => {
-      cancelled = true
-    }
+    void cargarPerfiles()
   }, [])
+
+  const resetFormState = () => {
+    setEditingPerfilId(null)
+    setNewPerfil(emptyPerfilForm)
+    setCreateError(null)
+    setCreateWarning(null)
+  }
 
   const handleContinuar = () => {
     if (!selectedId) return
     setPeriodo(selectedId, anio, mes)
     avanzarPaso()
+  }
+
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setCreateError(null)
+    setCreateWarning(null)
+    setCreating(true)
+    try {
+      if (editingPerfilId) {
+        await perfilesApi.actualizar(editingPerfilId, newPerfil)
+      } else {
+        await perfilesApi.crear(newPerfil)
+      }
+      setIsCreating(false)
+      resetFormState()
+      await cargarPerfiles()
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 422) {
+        const detail = err.response.data?.detail
+        if (detail?.requires_ciiu_confirmation) {
+          setCreateWarning(
+            `El CIIU seleccionado tiene costos presuntos de ${(Number(detail.pct_costos_presuntos) * 100).toFixed(2)}%. Debe confirmar expresamente antes de guardar el perfil.`
+          )
+          return
+        }
+      }
+      setCreateError(
+        editingPerfilId
+          ? 'Error al actualizar el perfil. Asegurese de que el CIIU sea valido.'
+          : 'Error al crear perfil. Asegurese de que el CIIU sea valido.'
+      )
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleEditarPerfil = () => {
+    const perfil = perfiles.find((item) => item.id === selectedId)
+    if (!perfil) return
+    setEditingPerfilId(perfil.id)
+    setNewPerfil({
+      tipo_documento: perfil.tipo_documento,
+      numero_documento: perfil.numero_documento,
+      nombre_completo: perfil.nombre_completo,
+      eps: perfil.eps,
+      afp: perfil.afp,
+      ciiu_codigo: perfil.ciiu_codigo,
+      confirmar_ciiu_alto: false,
+    })
+    setCreateError(null)
+    setCreateWarning(null)
+    setIsCreating(true)
+  }
+
+  const handleCompartirConContador = async () => {
+    if (!selectedId || !contadorEmail) return
+    setShareMessage(null)
+    try {
+      const respuesta = await contadorApi.vincular({
+        perfil_id: selectedId,
+        contador_email: contadorEmail,
+      })
+      setShareMessage(respuesta.message)
+      setContadorEmail('')
+    } catch {
+      setShareMessage(
+        'No fue posible vincular el contador. Verifique que exista una cuenta con tipo Contador y ese email.'
+      )
+    }
   }
 
   if (loading) {
@@ -75,29 +150,15 @@ export function StepSeleccionarPerfil() {
     )
   }
 
-  const handleCreateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setCreateError(null)
-    setCreating(true)
-    try {
-      await perfilesApi.crear(newPerfil)
-      setIsCreating(false)
-      cargarPerfiles()
-    } catch {
-      setCreateError('Error al crear perfil. Asegúrese de que el CIIU sea válido (ej. 6201, 6910, 6920, 7020).')
-    } finally {
-      setCreating(false)
-    }
-  }
-
   if (isCreating) {
     return (
       <div className="wizard-step">
-        <h2>Crear Nuevo Perfil</h2>
+        <h2>{editingPerfilId ? 'Editar Perfil' : 'Crear Nuevo Perfil'}</h2>
         <form onSubmit={handleCreateSubmit} className="perfil-form">
           <div className="field">
-            <label>Tipo Documento</label>
+            <label htmlFor="perfil-tipo-documento">Tipo Documento</label>
             <select
+              id="perfil-tipo-documento"
               value={newPerfil.tipo_documento}
               onChange={(e) => setNewPerfil({ ...newPerfil, tipo_documento: e.target.value })}
             >
@@ -107,51 +168,76 @@ export function StepSeleccionarPerfil() {
             </select>
           </div>
           <div className="field">
-            <label>Número Documento</label>
+            <label htmlFor="perfil-numero-documento">Numero Documento</label>
             <input
+              id="perfil-numero-documento"
               required
               value={newPerfil.numero_documento}
               onChange={(e) => setNewPerfil({ ...newPerfil, numero_documento: e.target.value })}
             />
           </div>
           <div className="field">
-            <label>Nombre Completo</label>
+            <label htmlFor="perfil-nombre-completo">Nombre Completo</label>
             <input
+              id="perfil-nombre-completo"
               required
               value={newPerfil.nombre_completo}
               onChange={(e) => setNewPerfil({ ...newPerfil, nombre_completo: e.target.value })}
             />
           </div>
           <div className="field">
-            <label>EPS</label>
+            <label htmlFor="perfil-eps">EPS</label>
             <input
+              id="perfil-eps"
               required
               value={newPerfil.eps}
               onChange={(e) => setNewPerfil({ ...newPerfil, eps: e.target.value })}
             />
           </div>
           <div className="field">
-            <label>AFP</label>
+            <label htmlFor="perfil-afp">AFP</label>
             <input
+              id="perfil-afp"
               required
               value={newPerfil.afp}
               onChange={(e) => setNewPerfil({ ...newPerfil, afp: e.target.value })}
             />
           </div>
           <div className="field">
-            <label>Código CIIU (ej: 6201)</label>
+            <label htmlFor="perfil-ciiu">Codigo CIIU</label>
             <input
+              id="perfil-ciiu"
               required
               value={newPerfil.ciiu_codigo}
               onChange={(e) => setNewPerfil({ ...newPerfil, ciiu_codigo: e.target.value })}
             />
           </div>
+          {createWarning && <div className="aviso-requerido">{createWarning}</div>}
+          {createWarning && (
+            <label className="checkbox-inline">
+              <input
+                type="checkbox"
+                checked={newPerfil.confirmar_ciiu_alto ?? false}
+                onChange={(e) =>
+                  setNewPerfil({ ...newPerfil, confirmar_ciiu_alto: e.target.checked })
+                }
+              />
+              Confirmo que este CIIU corresponde exactamente a mi actividad economica.
+            </label>
+          )}
           {createError && <div className="error-banner">{createError}</div>}
           <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
             <button type="submit" className="btn-primary" disabled={creating}>
-              {creating ? 'Guardando...' : 'Guardar Perfil'}
+              {creating ? 'Guardando...' : editingPerfilId ? 'Guardar cambios' : 'Guardar Perfil'}
             </button>
-            <button type="button" onClick={() => setIsCreating(false)} className="btn-secondary">
+            <button
+              type="button"
+              onClick={() => {
+                setIsCreating(false)
+                resetFormState()
+              }}
+              className="btn-secondary"
+            >
               Cancelar
             </button>
           </div>
@@ -167,27 +253,43 @@ export function StepSeleccionarPerfil() {
         <div className="aviso-requerido">
           No tiene perfiles registrados. Por favor, cree su perfil de contratista.
         </div>
-        <button className="btn-primary" onClick={() => setIsCreating(true)} style={{ marginTop: '1rem' }}>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            resetFormState()
+            setIsCreating(true)
+          }}
+          style={{ marginTop: '1rem' }}
+        >
           Crear Nuevo Perfil
         </button>
       </div>
     )
   }
 
-
-
-
-
   return (
     <div className="wizard-step">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Seleccionar Perfil</h2>
-        <button className="btn-secondary" onClick={() => setIsCreating(true)}>
-          Crear Perfil
-        </button>
+        <div className="wizard-actions">
+          {selectedId && (
+            <button className="btn-secondary" onClick={handleEditarPerfil}>
+              Editar perfil
+            </button>
+          )}
+          <button
+            className="btn-secondary"
+            onClick={() => {
+              resetFormState()
+              setIsCreating(true)
+            }}
+          >
+            Crear Perfil
+          </button>
+        </div>
       </div>
       <p className="step-description">
-        Seleccione el perfil de contratista para el cual desea realizar la liquidación:
+        Seleccione el perfil de contratista para el cual desea realizar la liquidacion:
       </p>
 
       <div className="perfiles-lista">
@@ -213,24 +315,60 @@ export function StepSeleccionarPerfil() {
               </label>
             </div>
             <div className="perfil-detalles">
-              <span>{perfil.tipo_documento}: {perfil.numero_documento}</span>
+              <span>
+                {perfil.tipo_documento}: {perfil.numero_documento}
+              </span>
               <span>CIIU: {perfil.ciiu_codigo}</span>
-              <span>EPS: {perfil.eps} | AFP: {perfil.afp}</span>
-              {perfil.estado !== 'activo' && (
-                <span className="perfil-estado-inactivo">Estado: {perfil.estado}</span>
+              {perfil.pct_costos_presuntos && (
+                <span>
+                  Costos presuntos: {(Number(perfil.pct_costos_presuntos) * 100).toFixed(2)}%
+                </span>
+              )}
+              <span>
+                EPS: {perfil.eps} | AFP: {perfil.afp}
+              </span>
+              {perfil.pct_costos_presuntos && Number(perfil.pct_costos_presuntos) > 0.6 && (
+                <span className="perfil-estado-inactivo">
+                  Requiere validacion especial: costos presuntos superiores al 60%.
+                </span>
               )}
             </div>
           </div>
         ))}
       </div>
 
-      <button
-        className="btn-primary"
-        onClick={handleContinuar}
-        disabled={selectedId === null}
-      >
-        Continuar
-      </button>
+      <div className="wizard-actions">
+        <button className="btn-primary" onClick={handleContinuar} disabled={selectedId === null}>
+          Continuar
+        </button>
+      </div>
+
+      {selectedId && (
+        <div className="share-panel">
+          <h3>Autorizar contador</h3>
+          <p className="step-description">
+            Ingrese el email de un contador registrado para darle acceso de lectura a este perfil y su historial.
+          </p>
+          <p className="nota-neto">
+            El contador debe haberse registrado antes con tipo de cuenta Contador y luego ingresar desde la pantalla normal de login.
+          </p>
+          <div className="wizard-actions">
+            <input
+              className="share-input"
+              type="email"
+              placeholder="contador@correo.com"
+              value={contadorEmail}
+              onChange={(e) => setContadorEmail(e.target.value)}
+            />
+            <button className="btn-secondary" onClick={() => void handleCompartirConContador()}>
+              Vincular contador
+            </button>
+          </div>
+          {shareMessage && <div className="aviso-tope">{shareMessage}</div>}
+        </div>
+      )}
+
+      {selectedId && <HistorialLiquidaciones perfilId={selectedId} />}
     </div>
   )
 }

@@ -23,6 +23,7 @@ export function StepGestionContratos() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [editingContratoId, setEditingContratoId] = useState<string | null>(null)
   const [form, setForm] = useState<ContratoCreate>({
     perfil_id: perfilId ?? '',
     entidad_contratante: '',
@@ -32,10 +33,22 @@ export function StepGestionContratos() {
     fecha_fin: '',
   })
 
+  const resetForm = () => {
+    setEditingContratoId(null)
+    setForm({
+      perfil_id: perfilId ?? '',
+      entidad_contratante: '',
+      valor_bruto_mensual: '',
+      nivel_arl: 'I',
+      fecha_inicio: '',
+      fecha_fin: '',
+    })
+  }
+
   const cargarContratos = async () => {
     if (!perfilId) {
       setLoading(false)
-      setError('No se encontró el perfil seleccionado. Regrese al paso anterior.')
+      setError('No se encontro el perfil seleccionado. Regrese al paso anterior.')
       return
     }
 
@@ -56,7 +69,7 @@ export function StepGestionContratos() {
     void cargarContratos()
   }, [perfilId])
 
-  const handleCrearContrato = async (e: React.FormEvent) => {
+  const handleGuardarContrato = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!perfilId) return
 
@@ -68,20 +81,23 @@ export function StepGestionContratos() {
         perfil_id: perfilId,
         fecha_fin: form.fecha_fin || undefined,
       }
-      await contratosApi.crear(payload)
-      setForm({
-        perfil_id: perfilId,
-        entidad_contratante: '',
-        valor_bruto_mensual: '',
-        nivel_arl: 'I',
-        fecha_inicio: '',
-        fecha_fin: '',
-      })
+
+      if (editingContratoId) {
+        await contratosApi.actualizar(editingContratoId, {
+          entidad_contratante: payload.entidad_contratante,
+          valor_bruto_mensual: payload.valor_bruto_mensual,
+          nivel_arl: payload.nivel_arl,
+          fecha_inicio: payload.fecha_inicio,
+          fecha_fin: payload.fecha_fin,
+        })
+      } else {
+        await contratosApi.crear(payload)
+      }
+
+      resetForm()
       await cargarContratos()
     } catch {
-      setError(
-        'No fue posible guardar el contrato. Verifique fechas, valor mensual y nivel ARL.'
-      )
+      setError('No fue posible guardar el contrato. Verifique fechas, valor mensual y nivel ARL.')
     } finally {
       setSaving(false)
     }
@@ -97,6 +113,19 @@ export function StepGestionContratos() {
     }
   }
 
+  const handleEditarContrato = (contrato: ContratoResponse) => {
+    setEditingContratoId(contrato.id)
+    setError(null)
+    setForm({
+      perfil_id: contrato.perfil_id,
+      entidad_contratante: contrato.entidad_contratante,
+      valor_bruto_mensual: contrato.valor_bruto_mensual,
+      nivel_arl: contrato.nivel_arl,
+      fecha_inicio: contrato.fecha_inicio,
+      fecha_fin: contrato.fecha_fin ?? '',
+    })
+  }
+
   const hayProporcionalidad = form.fecha_inicio && !form.fecha_inicio.endsWith('-01')
   const valorNumerico = Number(form.valor_bruto_mensual)
   const advertirTope = Number.isFinite(valorNumerico) && valorNumerico > 0 && valorNumerico >= 35_587_500
@@ -105,13 +134,15 @@ export function StepGestionContratos() {
     <div className="wizard-step">
       <h2>Registrar Contratos</h2>
       <p className="step-description">
-        Ingrese todos los contratos activos del período. El motor consolidará los ingresos
-        y tomará el nivel ARL más alto para la liquidación.
+        Ingrese todos los contratos activos del periodo. El motor consolidara los ingresos y tomara el nivel ARL mas alto para la liquidacion.
+      </p>
+      <p className="nota-neto">
+        Las fechas deben reflejar la vigencia real del contrato. Pueden cruzar varios anos; la liquidacion solo tomara los dias que correspondan al periodo elegido.
       </p>
 
       {error && <div className="error-banner">{error}</div>}
 
-      <form onSubmit={handleCrearContrato} className="contrato-form">
+      <form onSubmit={handleGuardarContrato} className="contrato-form">
         <div className="field field-wide">
           <label htmlFor="entidad">Entidad contratante</label>
           <input
@@ -173,20 +204,25 @@ export function StepGestionContratos() {
 
         <div className="wizard-actions">
           <button type="submit" className="btn-primary" disabled={saving || !perfilId}>
-            {saving ? 'Guardando...' : 'Agregar contrato'}
+            {saving ? 'Guardando...' : editingContratoId ? 'Guardar cambios' : 'Agregar contrato'}
           </button>
+          {editingContratoId && (
+            <button type="button" className="btn-secondary" onClick={resetForm}>
+              Cancelar edicion
+            </button>
+          )}
         </div>
       </form>
 
       {hayProporcionalidad && (
         <div className="aviso-requerido">
-          La fecha de inicio no coincide con el día 1. El sistema aplicará proporcionalidad por días.
+          La fecha de inicio no coincide con el dia 1. El sistema aplicara proporcionalidad por dias.
         </div>
       )}
 
       {advertirTope && (
         <div className="aviso-tope">
-          Este contrato supera aproximadamente 25 SMMLV mensuales. El IBC final podrá ser topado.
+          Este contrato supera aproximadamente 25 SMMLV mensuales. El IBC final podria ser topado.
         </div>
       )}
 
@@ -196,7 +232,7 @@ export function StepGestionContratos() {
           <div className="loading-state">Cargando contratos...</div>
         ) : contratos.length === 0 ? (
           <div className="aviso-requerido">
-            Debe registrar al menos un contrato para calcular la liquidación.
+            Debe registrar al menos un contrato para calcular la liquidacion.
           </div>
         ) : (
           contratos.map((contrato) => (
@@ -210,13 +246,22 @@ export function StepGestionContratos() {
                   <span>Fin: {contrato.fecha_fin ?? 'Abierto'}</span>
                 </div>
               </div>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => void handleEliminarContrato(contrato.id)}
-              >
-                Eliminar
-              </button>
+              <div className="wizard-actions">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => handleEditarContrato(contrato)}
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => void handleEliminarContrato(contrato.id)}
+                >
+                  Eliminar
+                </button>
+              </div>
             </div>
           ))
         )}
@@ -224,14 +269,14 @@ export function StepGestionContratos() {
 
       <div className="wizard-actions">
         <button className="btn-secondary" onClick={retrocederPaso}>
-          Atrás
+          Atras
         </button>
         <button
           className="btn-primary"
           onClick={avanzarPaso}
           disabled={loading || contratos.length === 0}
         >
-          Continuar al período
+          Continuar al periodo
         </button>
       </div>
     </div>

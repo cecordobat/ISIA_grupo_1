@@ -27,3 +27,9 @@ class PerfilRepository:
         self._db.add(perfil)
         await self._db.flush()
         return perfil
+
+    async def actualizar(self, perfil: PerfilContratista, **kwargs: object) -> PerfilContratista:
+        for key, value in kwargs.items():
+            setattr(perfil, key, value)
+        await self._db.flush()
+        return perfil

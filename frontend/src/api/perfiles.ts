@@ -8,6 +8,7 @@ export interface PerfilResponse {
   eps: string
   afp: string
   ciiu_codigo: string
+  pct_costos_presuntos?: string | null
   estado: string
 }
 
@@ -18,6 +19,7 @@ export interface PerfilCreate {
   eps: string
   afp: string
   ciiu_codigo: string
+  confirmar_ciiu_alto?: boolean
 }
 
 export const perfilesApi = {
@@ -27,6 +29,10 @@ export const perfilesApi = {
   },
   crear: async (perfil: PerfilCreate): Promise<PerfilResponse> => {
     const { data } = await apiClient.post<PerfilResponse>('/perfiles/', perfil)
+    return data
+  },
+  actualizar: async (perfilId: string, perfil: PerfilCreate): Promise<PerfilResponse> => {
+    const { data } = await apiClient.put<PerfilResponse>(`/perfiles/${perfilId}`, perfil)
     return data
   },
 }

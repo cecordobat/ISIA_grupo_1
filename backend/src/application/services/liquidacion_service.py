@@ -10,6 +10,7 @@ Responsabilidades:
 
 Ref: context/invariantes.md INV-02 (engine puro), INV-05 (orden)
 """
+from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -17,13 +18,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.enums import NivelARL, OpcionPisoProteccion
 from src.domain.exceptions import AccesoNoAutorizadoError, ContratistaNoEncontradoError
-from src.engine.dtos import ContratoInput, LiquidacionResult, PeriodoLiquidacion
+from src.engine.dtos import (
+    ContratoInput,
+    LiquidacionResult,
+    ParametrosNormativosDTO,
+    PeriodoLiquidacion,
+)
 from src.engine.liquidacion_engine import calcular
 from src.infrastructure.models.liquidacion_periodo import LiquidacionPeriodo
 from src.infrastructure.repositories.contrato_repo import ContratoRepository
 from src.infrastructure.repositories.liquidacion_repo import LiquidacionRepository
 from src.infrastructure.repositories.parametros_repo import ParametrosRepository
 from src.infrastructure.repositories.perfil_repo import PerfilRepository
+
+
+@dataclass(frozen=True)
+class LiquidacionEjecutada:
+    resultado: LiquidacionResult
+    liquidacion: LiquidacionPeriodo
+    parametros: ParametrosNormativosDTO
+    contratos: list[ContratoInput]
 
 
 class LiquidacionService:
@@ -42,7 +56,7 @@ class LiquidacionService:
         anio: int,
         mes: int,
         opcion_piso: OpcionPisoProteccion | None = None,
-    ) -> tuple[LiquidacionResult, LiquidacionPeriodo]:
+    ) -> LiquidacionEjecutada:
         """
         Orquesta el flujo completo de liquidación para un período.
 
@@ -104,7 +118,12 @@ class LiquidacionService:
         )
         await self._db.commit()
 
-        return resultado, liquidacion
+        return LiquidacionEjecutada(
+            resultado=resultado,
+            liquidacion=liquidacion,
+            parametros=parametros,
+            contratos=contratos_input,
+        )
 
     async def obtener_historial(
         self, perfil_id: str, usuario_id: str

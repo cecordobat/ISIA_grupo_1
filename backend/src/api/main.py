@@ -7,16 +7,20 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.routers import auth, contratos, liquidaciones, perfiles
+from src.api.routers import auth, contador, contratos, liquidaciones, perfiles
 from src.config import get_settings
+from src.infrastructure.bootstrap import seed_reference_data
 from src.infrastructure.database import Base, engine
 
 # Importar todos los modelos ORM para que Base.metadata registre cada tabla
 # antes de que lifespan llame a create_all. Sin estos imports las tablas
 # no se crean aunque el engine esté configurado.
 from src.infrastructure.models import (  # noqa: F401
+    acceso_contador_perfil,
     contrato,
+    liquidacion_confirmacion,
     liquidacion_periodo,
+    liquidacion_revision,
     perfil_contratista,
     snapshot_normativo,
     tabla_ciiu,
@@ -32,6 +36,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Crea las tablas al iniciar (dev). En prod usar Alembic."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    await seed_reference_data(engine)
     yield
 
 
@@ -56,6 +61,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(auth.router)
+    app.include_router(contador.router)
     app.include_router(liquidaciones.router)
     app.include_router(perfiles.router)
     app.include_router(contratos.router)

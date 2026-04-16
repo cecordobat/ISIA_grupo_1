@@ -21,6 +21,16 @@ class ContratoCreate(BaseModel):
     fecha_fin: date | None = None
 
 
+class ContratoUpdate(BaseModel):
+    """Payload para actualizar un contrato existente."""
+
+    entidad_contratante: str
+    valor_bruto_mensual: Decimal
+    nivel_arl: NivelARL
+    fecha_inicio: date
+    fecha_fin: date | None = None
+
+
 class ContratoResponse(BaseModel):
     """Respuesta con los datos del contrato. Decimales serializados como str (INV-01)."""
 

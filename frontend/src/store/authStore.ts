@@ -1,23 +1,37 @@
 import { create } from 'zustand'
 
+export type RolUsuario = 'CONTRATISTA' | 'CONTADOR' | 'ADMIN'
+
+const tokenInicial = localStorage.getItem('access_token')
+const rolInicial = localStorage.getItem('user_role') as RolUsuario | null
+
+// Limpia sesiones heredadas de versiones anteriores que no guardaban el rol.
+if (tokenInicial && !rolInicial) {
+  localStorage.removeItem('access_token')
+}
+
 interface AuthState {
   token: string | null
+  rol: RolUsuario | null
   isAuthenticated: boolean
-  setToken: (token: string) => void
+  setSession: (token: string, rol: RolUsuario) => void
   logout: () => void
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  token: localStorage.getItem('access_token'),
-  isAuthenticated: !!localStorage.getItem('access_token'),
+  token: rolInicial ? tokenInicial : null,
+  rol: rolInicial,
+  isAuthenticated: Boolean(tokenInicial && rolInicial),
 
-  setToken: (token: string) => {
+  setSession: (token, rol) => {
     localStorage.setItem('access_token', token)
-    set({ token, isAuthenticated: true })
+    localStorage.setItem('user_role', rol)
+    set({ token, rol, isAuthenticated: true })
   },
 
   logout: () => {
     localStorage.removeItem('access_token')
-    set({ token: null, isAuthenticated: false })
+    localStorage.removeItem('user_role')
+    set({ token: null, rol: null, isAuthenticated: false })
   },
 }))

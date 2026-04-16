@@ -7,7 +7,7 @@ import { create } from 'zustand'
 import type { LiquidacionResponse, OpcionPiso } from '../api/liquidaciones'
 
 interface WizardState {
-  // Paso actual del wizard (1..5)
+  // Paso actual del wizard (1..6)
   paso: number
   // Datos del período
   perfilId: string | null
@@ -43,7 +43,7 @@ export const useLiquidacionStore = create<WizardState>((set) => ({
   setOpcionPiso: (opcion) => set({ opcionPiso: opcion }),
   setResultado: (resultado) => set({ resultado }),
   setRequiereDecisionPiso: (requiere) => set({ requiereDecisionPiso: requiere }),
-  avanzarPaso: () => set((s) => ({ paso: Math.min(s.paso + 1, 5) })),
+  avanzarPaso: () => set((s) => ({ paso: Math.min(s.paso + 1, 6) })),
   retrocederPaso: () => set((s) => ({ paso: Math.max(s.paso - 1, 1) })),
   resetear: () =>
     set({

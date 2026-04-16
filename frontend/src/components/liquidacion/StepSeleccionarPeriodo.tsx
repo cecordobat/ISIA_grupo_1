@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { liquidacionesApi } from '../../api/liquidaciones'
 import { useLiquidacionStore } from '../../store/liquidacionStore'
@@ -18,9 +18,6 @@ const MESES = [
   'Diciembre',
 ]
 
-const ANIO_ACTUAL = new Date().getFullYear()
-const ANIOS = [ANIO_ACTUAL - 1, ANIO_ACTUAL]
-
 export function StepSeleccionarPeriodo() {
   const {
     perfilId,
@@ -35,8 +32,34 @@ export function StepSeleccionarPeriodo() {
 
   const [anioLocal, setAnioLocal] = useState(anio)
   const [mesLocal, setMesLocal] = useState(mes)
+  const [aniosDisponibles, setAniosDisponibles] = useState<number[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadingAnios, setLoadingAnios] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let activo = true
+    const cargarAnios = async () => {
+      setLoadingAnios(true)
+      try {
+        const anios = await liquidacionesApi.aniosDisponibles()
+        if (!activo) return
+        setAniosDisponibles(anios)
+        if (anios.length > 0 && !anios.includes(anioLocal)) {
+          setAnioLocal(anios[0])
+        }
+      } catch {
+        if (!activo) return
+        setError('No fue posible cargar los periodos disponibles para liquidacion.')
+      } finally {
+        if (activo) setLoadingAnios(false)
+      }
+    }
+    void cargarAnios()
+    return () => {
+      activo = false
+    }
+  }, [])
 
   const handleCalcular = async () => {
     if (!perfilId) return
@@ -69,6 +92,9 @@ export function StepSeleccionarPeriodo() {
         setError('Ya existe una liquidacion para este periodo. Seleccione un periodo diferente.')
       } else if (axios.isAxiosError(err) && err.response?.status === 404) {
         setError('El perfil seleccionado no fue encontrado. Regrese al paso anterior.')
+      } else if (axios.isAxiosError(err) && err.response?.status === 400) {
+        const detail = err.response.data?.detail
+        setError(typeof detail === 'string' ? detail : 'No hay parametros normativos para el periodo seleccionado.')
       } else {
         setError('Error al conectar con el servidor. Verifique su conexion e intente nuevamente.')
       }
@@ -91,9 +117,9 @@ export function StepSeleccionarPeriodo() {
             id="anio"
             value={anioLocal}
             onChange={(e) => setAnioLocal(Number(e.target.value))}
-            disabled={loading}
+            disabled={loading || loadingAnios || aniosDisponibles.length === 0}
           >
-            {ANIOS.map((a) => (
+            {aniosDisponibles.map((a) => (
               <option key={a} value={a}>
                 {a}
               </option>
@@ -124,7 +150,11 @@ export function StepSeleccionarPeriodo() {
         <button className="btn-secondary" onClick={retrocederPaso} disabled={loading}>
           Atras
         </button>
-        <button className="btn-primary" onClick={handleCalcular} disabled={loading}>
+        <button
+          className="btn-primary"
+          onClick={handleCalcular}
+          disabled={loading || loadingAnios || aniosDisponibles.length === 0}
+        >
           {loading ? 'Calculando...' : 'Calcular'}
         </button>
       </div>

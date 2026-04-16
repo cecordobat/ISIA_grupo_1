@@ -16,6 +16,7 @@ REGISTER_URL = "/auth/register"
 LOGIN_URL = "/auth/login"
 PERFILES_URL = "/perfiles/"
 CONTRATOS_URL = "/contratos/"
+CONTADOR_URL = "/contador"
 
 # Payloads base
 USER_A = {
@@ -89,6 +90,29 @@ async def test_crear_perfil_exitoso(async_client: AsyncClient):
     data = resp.json()
     assert "id" in data
     assert data["nombre_completo"] == PERFIL_PAYLOAD["nombre_completo"]
+
+
+@pytest.mark.asyncio
+async def test_crear_perfil_con_ciiu_alto_requiere_confirmacion(async_client: AsyncClient):
+    token = await _register_and_token(async_client, USER_A)
+    payload = {
+        **PERFIL_PAYLOAD,
+        "numero_documento": "3333333333",
+        "ciiu_codigo": "9001",
+    }
+
+    resp = await async_client.post(PERFILES_URL, json=payload, headers=_auth_header(token))
+
+    assert resp.status_code == 422, resp.text
+    detail = resp.json()["detail"]
+    assert detail["requires_ciiu_confirmation"] is True
+
+    resp_ok = await async_client.post(
+        PERFILES_URL,
+        json={**payload, "confirmar_ciiu_alto": True},
+        headers=_auth_header(token),
+    )
+    assert resp_ok.status_code == 201, resp_ok.text
 
 
 @pytest.mark.asyncio
@@ -187,3 +211,38 @@ async def test_eliminar_contrato_ajeno_retorna_403(async_client: AsyncClient):
     )
 
     assert resp.status_code == 403, resp.text
+
+
+@pytest.mark.asyncio
+async def test_contratista_vincula_contador_y_contador_ve_clientes(async_client: AsyncClient):
+    token_contratista = await _register_and_token(async_client, USER_A)
+    token_contador = await _register_and_token(
+        async_client,
+        {
+            "email": "contador@example.com",
+            "password": "passContador123",
+            "nombre_completo": "Contador Uno",
+            "rol": "CONTADOR",
+        },
+    )
+    perfil = await _crear_perfil(
+        async_client,
+        token_contratista,
+        {**PERFIL_PAYLOAD, "numero_documento": "4444444444"},
+    )
+
+    vinculo_resp = await async_client.post(
+        f"{CONTADOR_URL}/vinculos",
+        json={"perfil_id": perfil["id"], "contador_email": "contador@example.com"},
+        headers=_auth_header(token_contratista),
+    )
+    assert vinculo_resp.status_code == 201, vinculo_resp.text
+
+    clientes_resp = await async_client.get(
+        f"{CONTADOR_URL}/clientes",
+        headers=_auth_header(token_contador),
+    )
+    assert clientes_resp.status_code == 200, clientes_resp.text
+    clientes = clientes_resp.json()
+    assert len(clientes) == 1
+    assert clientes[0]["perfil_id"] == perfil["id"]

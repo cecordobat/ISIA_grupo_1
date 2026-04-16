@@ -32,3 +32,9 @@ class Usuario(Base):
     perfiles: Mapped[list["PerfilContratista"]] = relationship(  # type: ignore[name-defined]
         "PerfilContratista", back_populates="usuario", lazy="select"
     )
+    accesos_contador: Mapped[list["AccesoContadorPerfil"]] = relationship(  # type: ignore[name-defined]
+        "AccesoContadorPerfil",
+        foreign_keys="AccesoContadorPerfil.contador_id",
+        back_populates="contador",
+        lazy="select",
+    )

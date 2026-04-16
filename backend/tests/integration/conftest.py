@@ -4,12 +4,16 @@ Fixtures de integración — cliente HTTP sobre SQLite en memoria.
 Cada test recibe un AsyncClient fresco con su propia base de datos
 en memoria (scope="function"), garantizando aislamiento total.
 """
+from datetime import date
+
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.api.main import app
 from src.infrastructure.database import Base, get_db
+from src.infrastructure.models.tabla_ciiu import TablaParametroCIIU
 
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
@@ -25,6 +29,23 @@ async def async_client():
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(
+            insert(TablaParametroCIIU),
+            [
+                {
+                    "codigo_ciiu": "6201",
+                    "descripcion": "Actividades de desarrollo de sistemas informaticos",
+                    "pct_costos_presuntos": 0.27,
+                    "vigente_desde": date(2025, 1, 1),
+                },
+                {
+                    "codigo_ciiu": "9001",
+                    "descripcion": "Actividades artisticas con costo presunto alto",
+                    "pct_costos_presuntos": 0.65,
+                    "vigente_desde": date(2025, 1, 1),
+                },
+            ],
+        )
 
     async def override_get_db():
         async with session_factory() as session:

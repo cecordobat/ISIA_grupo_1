@@ -34,3 +34,9 @@ class ContratoRepository:
             )
         )
         return result.scalar_one_or_none()
+
+    async def actualizar(self, contrato: Contrato, **kwargs: object) -> Contrato:
+        for key, value in kwargs.items():
+            setattr(contrato, key, value)
+        await self._db.flush()
+        return contrato

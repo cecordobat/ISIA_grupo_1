@@ -2,6 +2,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.domain.enums import RolUsuario
 from src.infrastructure.models.usuario import Usuario
 
 
@@ -22,11 +23,18 @@ class UsuarioRepository:
         )
         return result.scalar_one_or_none()
 
-    async def crear(self, email: str, hashed_password: str, nombre_completo: str) -> Usuario:
+    async def crear(
+        self,
+        email: str,
+        hashed_password: str,
+        nombre_completo: str,
+        rol: RolUsuario = RolUsuario.CONTRATISTA,
+    ) -> Usuario:
         usuario = Usuario(
             email=email,
             hashed_password=hashed_password,
             nombre_completo=nombre_completo,
+            rol=rol,
         )
         self._db.add(usuario)
         await self._db.flush()

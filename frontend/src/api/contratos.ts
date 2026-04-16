@@ -36,6 +36,14 @@ export const contratosApi = {
     return data
   },
 
+  actualizar: async (
+    contratoId: string,
+    body: Omit<ContratoCreate, 'perfil_id'>
+  ): Promise<ContratoResponse> => {
+    const { data } = await apiClient.put<ContratoResponse>(`/contratos/${contratoId}`, body)
+    return data
+  },
+
   eliminar: async (contratoId: string): Promise<void> => {
     await apiClient.delete(`/contratos/${contratoId}`)
   },
