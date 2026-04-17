@@ -7,28 +7,25 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Importar todos los modelos ORM para que Base.metadata registre cada tabla
+# antes de que lifespan llame a create_all. Sin estos imports las tablas
+# no se crean aunque el engine esté configurado.
+import src.infrastructure.models.acceso_contador_perfil  # noqa: F401
+import src.infrastructure.models.acceso_entidad_contratante  # noqa: F401
+import src.infrastructure.models.contrato  # noqa: F401
+import src.infrastructure.models.liquidacion_confirmacion  # noqa: F401
+import src.infrastructure.models.liquidacion_periodo  # noqa: F401
+import src.infrastructure.models.liquidacion_revision  # noqa: F401
+import src.infrastructure.models.perfil_contratista  # noqa: F401
+import src.infrastructure.models.snapshot_normativo  # noqa: F401
+import src.infrastructure.models.tabla_ciiu  # noqa: F401
+import src.infrastructure.models.tabla_retencion_383  # noqa: F401
+import src.infrastructure.models.usuario  # noqa: F401
+import src.infrastructure.models.usuario_mfa  # noqa: F401
 from src.api.routers import auth, contador, contratos, liquidaciones, perfiles
 from src.config import get_settings
 from src.infrastructure.bootstrap import seed_reference_data
 from src.infrastructure.database import Base, engine
-
-# Importar todos los modelos ORM para que Base.metadata registre cada tabla
-# antes de que lifespan llame a create_all. Sin estos imports las tablas
-# no se crean aunque el engine esté configurado.
-from src.infrastructure.models import (  # noqa: F401
-    acceso_contador_perfil,
-    acceso_entidad_contratante,
-    contrato,
-    liquidacion_confirmacion,
-    liquidacion_periodo,
-    liquidacion_revision,
-    perfil_contratista,
-    snapshot_normativo,
-    tabla_ciiu,
-    tabla_retencion_383,
-    usuario,
-    usuario_mfa,
-)
 
 settings = get_settings()
 

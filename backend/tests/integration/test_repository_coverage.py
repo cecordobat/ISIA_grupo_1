@@ -6,6 +6,17 @@ import pytest_asyncio
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+import src.infrastructure.models.acceso_contador_perfil  # noqa: F401
+import src.infrastructure.models.contrato  # noqa: F401
+import src.infrastructure.models.liquidacion_confirmacion  # noqa: F401
+import src.infrastructure.models.liquidacion_periodo  # noqa: F401
+import src.infrastructure.models.liquidacion_revision  # noqa: F401
+import src.infrastructure.models.perfil_contratista  # noqa: F401
+import src.infrastructure.models.snapshot_normativo  # noqa: F401
+import src.infrastructure.models.tabla_ciiu  # noqa: F401
+import src.infrastructure.models.tabla_retencion_383  # noqa: F401
+import src.infrastructure.models.usuario  # noqa: F401
+import src.infrastructure.models.usuario_mfa  # noqa: F401
 from src.domain.enums import NivelARL, OpcionPisoProteccion, RolUsuario, TipoDocumento
 from src.domain.exceptions import LiquidacionDuplicadaError
 from src.engine.dtos import (
@@ -17,19 +28,6 @@ from src.engine.dtos import (
     RetencionResult,
 )
 from src.infrastructure.database import Base
-from src.infrastructure.models import (  # noqa: F401
-    acceso_contador_perfil,
-    contrato,
-    liquidacion_confirmacion,
-    liquidacion_periodo,
-    liquidacion_revision,
-    perfil_contratista,
-    snapshot_normativo,
-    tabla_ciiu,
-    tabla_retencion_383,
-    usuario,
-    usuario_mfa,
-)
 from src.infrastructure.models.snapshot_normativo import SnapshotNormativo
 from src.infrastructure.models.tabla_ciiu import TablaParametroCIIU
 from src.infrastructure.models.tabla_retencion_383 import TablaRetencion383
