@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { authApi } from '../api/auth'
@@ -19,6 +20,7 @@ export function LoginPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
+    clearMfaPending()
     try {
       const data = await authApi.login(email, password)
 
@@ -31,8 +33,17 @@ export function LoginPage() {
       } else {
         setError('La respuesta del servidor no contiene una sesion valida.')
       }
-    } catch {
-      setError('Email o contrasena incorrectos. Verifique sus datos.')
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const detail = err.response?.data?.detail
+        if (typeof detail === 'string' && detail.trim()) {
+          setError(detail)
+        } else {
+          setError('No fue posible iniciar sesion. Verifique sus datos e intente nuevamente.')
+        }
+      } else {
+        setError('No fue posible iniciar sesion. Verifique sus datos e intente nuevamente.')
+      }
     } finally {
       setLoading(false)
     }
