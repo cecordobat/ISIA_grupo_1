@@ -17,7 +17,7 @@
 
 ---
 
-## 📋 Tabla de Contenidos
+## Tabla de Contenidos
 
 1. [Construcción y Codificación](#1-construcción-y-codificación)
    - [1.1 Calidad del código](#11-calidad-del-código-legibilidad-organización-estándares)
@@ -56,13 +56,13 @@ ruff check src tests && mypy src --ignore-missing-imports
 
 | Diseño aprobado | Implementación verificada | Estado |
 |----------------|--------------------------|--------|
-| **ADR-001**: Motor como función pura | `backend/src/engine/calculation_core.py` sin imports de infraestructura | ✅ Verificado por job `invariant-audit` |
-| **INV-01**: Precisión con `Decimal` | Todos los cálculos financieros usan `Decimal("0.125")`, no floats | ✅ Auditado en código |
-| **INV-03**: Repositorio append-only | `LiquidacionPeriodoRepository` con solo método `create()` | ✅ Sin `update()`/`delete()` |
-| **INV-04**: Parámetros con vigencia | Modelo `ParametroNormativo` con `fecha_vigencia_desde/hasta` | ✅ Implementado en SQLAlchemy |
-| **INV-05**: Flujo de 10 pasos | Wizard React con 5 pasos UI + validaciones backend CT-01 a CT-04 | ✅ End-to-end funcional |
+| **ADR-001**: Motor como función pura | `backend/src/engine/calculation_core.py` sin imports de infraestructura | Verificado por job `invariant-audit` |
+| **INV-01**: Precisión con `Decimal` | Todos los cálculos financieros usan `Decimal("0.125")`, no floats | Auditado en código |
+| **INV-03**: Repositorio append-only | `LiquidacionPeriodoRepository` con solo método `create()` | Sin `update()`/`delete()` |
+| **INV-04**: Parámetros con vigencia | Modelo `ParametroNormativo` con `fecha_vigencia_desde/hasta` | Implementado en SQLAlchemy |
+| **INV-05**: Flujo de 10 pasos | Wizard React con 5 pasos UI + validaciones backend CT-01 a CT-04 | End-to-end funcional |
 
-> 🔗 **Evidencia:**  
+> **Evidencia:**  
 > - Archivo: `context/invariantes.md`  
 > - Job CI: `.github/workflows/ci.yml` → `invariant-audit`
 
@@ -114,7 +114,7 @@ services:
 | **No delegación crítica** | • Reglas normativas (RN-01 a RN-08) definidas en `context/business_rules.md` por el equipo<br>• IA usada para boilerplate, tests, refactorización — no para decisiones normativas |
 | **Auditoría automatizada** | • Job CI `invariant-audit` verifica que el engine no contenga código no validado<br>• Matriz de trazabilidad `context/traceability_matrix.md` vincula requisitos → código → tests |
 
-> 📄 **Documentación de IA:**  
+> **Documentación de IA:**  
 > - `Prompts_Proyecto.md`: Registro de prompts y respuestas clave  
 > - `CLAUDE.md`: Guía de uso del asistente en el proyecto
 
@@ -147,10 +147,10 @@ graph LR
 
 | Módulo | Tests implementados | Cobertura | Estado |
 |--------|-------------------|-----------|--------|
-| `backend/src/engine/` | 42 tests unitarios | **97.69%** | ✅ Supera umbral 80% |
-| `backend/src/api/` | 11 tests integración | ~85% (estimado) | ✅ Validación de auth y ownership |
-| `frontend/src/components/` | 6 tests componentes | 100% pasos wizard | ✅ Build TS sin errores |
-| **Total backend** | **53 tests** | **≥80%** | ✅ CI pasa con `--cov-fail-under=80` |
+| `backend/src/engine/` | 42 tests unitarios | **97.69%** | Supera umbral 80% |
+| `backend/src/api/` | 11 tests integración | ~85% (estimado) | Validación de auth y ownership |
+| `frontend/src/components/` | 6 tests componentes | 100% pasos wizard | Build TS sin errores |
+| **Total backend** | **53 tests** | **≥80%** | CI pasa con `--cov-fail-under=80` |
 
 ```bash
 # Comando para generar reporte de cobertura
@@ -188,34 +188,34 @@ TOTAL                                   1240     28    97%
 ```
 
 **Estado de CI/CD en GitHub Actions:**
-- ✅ `backend-lint`: ruff + mypy sin errores
-- ✅ `backend-tests`: 42 tests, cobertura 97.69%
-- ✅ `invariant-audit`: INV-01 y INV-02 verificados
-- ✅ `frontend-build`: TypeScript compile + tests sin errores
+ `backend-lint`: ruff + mypy sin errores
+ `backend-tests`: 42 tests, cobertura 97.69%
+ `invariant-audit`: INV-01 y INV-02 verificados
+ `frontend-build`: TypeScript compile + tests sin errores
 
-> 🔗 **Ver ejecuciones:** https://github.com/cecordobat/ISIA_grupo_1/actions
+ **Ver ejecuciones:** https://github.com/cecordobat/ISIA_grupo_1/actions
 
 ### 2.4 Validación de los requisitos funcionales mediante pruebas
 
 | Requisito Funcional | Test asociado | Resultado | Evidencia |
 |--------------------|---------------|-----------|-----------|
-| RF-01: Registro usuario | `test_auth_register_login` | ✅ Pasó | `tests/integration/test_auth.py` |
-| RF-03: Crear contrato | `test_contratos_crud_owner` | ✅ Pasó | `tests/integration/test_contratos.py` |
-| RF-05: Calcular IBC regla 40% | `test_ibe_regla_40_por_ciento` | ✅ Pasó | `tests/unit/engine/test_calculation_core.py:89` |
-| RF-06: Evaluar Piso Protección | `test_piso_proteccion_beps_vs_smmlv` | ✅ Pasó | `tests/unit/engine/test_piso_proteccion.py` |
-| RF-08: Formateo COP en resumen | `test_resumen_formateo_moneda` | ✅ Pasó | `tests/unit/engine/test_calculation_core.py:156` |
-| HU-04: Advertencia pensional UI | `test_StepPisoProteccion_render` | ✅ Pasó | `frontend/src/components/Liquidacion/StepPisoProteccion.test.tsx` |
+| RF-01: Registro usuario | `test_auth_register_login` | Pasó | `tests/integration/test_auth.py` |
+| RF-03: Crear contrato | `test_contratos_crud_owner` | Pasó | `tests/integration/test_contratos.py` |
+| RF-05: Calcular IBC regla 40% | `test_ibe_regla_40_por_ciento` | Pasó | `tests/unit/engine/test_calculation_core.py:89` |
+| RF-06: Evaluar Piso Protección | `test_piso_proteccion_beps_vs_smmlv` | Pasó | `tests/unit/engine/test_piso_proteccion.py` |
+| RF-08: Formateo COP en resumen | `test_resumen_formateo_moneda` | Pasó | `tests/unit/engine/test_calculation_core.py:156` |
+| HU-04: Advertencia pensional UI | `test_StepPisoProteccion_render` | Pasó | `frontend/src/components/Liquidacion/StepPisoProteccion.test.tsx` |
 
-> 🔗 **Matriz completa de trazabilidad:** `context/traceability_matrix.md`
+>  **Matriz completa de trazabilidad:** `context/traceability_matrix.md`
 
 ### 2.5 Identificación y gestión de defectos
 
 | Defecto identificado | Acción correctiva | Commit | Estado |
 |---------------------|------------------|--------|--------|
-| `bcrypt==4.1.0` incompatible con passlib | Pin a `bcrypt==4.0.1` en requirements | `fix: pin bcrypt version for passlib compatibility` | ✅ Resuelto |
-| Imports no usados en tests | Ejecutar `ruff check --fix` | `fix: remove unused imports in test files` | ✅ Resuelto |
-| Type hints faltantes en schemas Pydantic | Agregar `Mapped[Decimal]` explícito | `feat: add explicit type hints to Pydantic schemas` | ✅ Resuelto |
-| Visual inconsistency en RegisterPage | Refactorizar lógica de error handling | `fix: improve error handling in RegisterPage` | ✅ Resuelto |
+| `bcrypt==4.1.0` incompatible con passlib | Pin a `bcrypt==4.0.1` en requirements | `fix: pin bcrypt version for passlib compatibility` | Resuelto |
+| Imports no usados en tests | Ejecutar `ruff check --fix` | `fix: remove unused imports in test files` | Resuelto |
+| Type hints faltantes en schemas Pydantic | Agregar `Mapped[Decimal]` explícito | `feat: add explicit type hints to Pydantic schemas` | Resuelto |
+| Visual inconsistency en RegisterPage | Refactorizar lógica de error handling | `fix: improve error handling in RegisterPage` | Resuelto |
 
 **Proceso de gestión de defectos:**
 1. **Detección**: tests fallidos, linting, revisión de código, reportes de usuarios
@@ -227,14 +227,14 @@ TOTAL                                   1240     28    97%
 
 | Entregable | Ubicación / Instrucciones de acceso |
 |-----------|-----------------------------------|
-| ✅ Repositorio de código fuente | https://github.com/cecordobat/ISIA_grupo_1/tree/feature/motor-cumplimiento-willi |
-| ✅ Instrucciones de compilación y ejecución | Sección "Ejecución local" en `README.md` del repositorio |
-| ✅ Evidencia de control de versiones | `git log feature/motor-cumplimiento-willi` o historial web en GitHub |
-| ✅ Conjunto de pruebas implementadas | `backend/tests/` (unit/, integration/), `frontend/src/**/*.test.tsx` |
-| ✅ Reporte de ejecución y cobertura | Ejecutar: `pytest --cov-report=html` → abrir `backend/htmlcov/index.html` |
-| ✅ Documento de estrategia de pruebas | **Este documento** + `context/traceability_matrix.md` |
+| Repositorio de código fuente | https://github.com/cecordobat/ISIA_grupo_1/tree/feature/motor-cumplimiento-willi |
+| Instrucciones de compilación y ejecución | Sección "Ejecución local" en `README.md` del repositorio |
+| Evidencia de control de versiones | `git log feature/motor-cumplimiento-willi` o historial web en GitHub |
+| Conjunto de pruebas implementadas | `backend/tests/` (unit/, integration/), `frontend/src/**/*.test.tsx` |
+| Reporte de ejecución y cobertura | Ejecutar: `pytest --cov-report=html` → abrir `backend/htmlcov/index.html` |
+| Documento de estrategia de pruebas | **Este documento** + `context/traceability_matrix.md` |
 
-### 🚀 Instrucciones de ejecución local
+### Instrucciones de ejecución local
 
 ```bash
 # ============================================
@@ -266,7 +266,7 @@ npm install
 npm run dev
 ```
 
-### 🧪 Comandos de verificación para evaluador
+### Comandos de verificación para evaluador
 
 ```bash
 # 1. Clonar y verificar rama
@@ -293,12 +293,12 @@ cd .. && docker compose up --build
 
 ### A. Enlaces de evidencia directa en GitHub
 
-- 🔗 [Historial completo de commits](https://github.com/cecordobat/ISIA_grupo_1/commits/feature/motor-cumplimiento-willi)
-- 🔗 [Workflow de CI/CD](https://github.com/cecordobat/ISIA_grupo_1/blob/feature/motor-cumplimiento-willi/.github/workflows/ci.yml)
-- 🔗 [Matriz de trazabilidad requisitos→código→tests](https://github.com/cecordobat/ISIA_grupo_1/blob/feature/motor-cumplimiento-willi/context/traceability_matrix.md)
-- 🔗 [Reglas de negocio normativas](https://github.com/cecordobat/ISIA_grupo_1/blob/feature/motor-cumplimiento-willi/context/business_rules.md)
-- 🔗 [Documentación de prompts de IA usados](https://github.com/cecordobat/ISIA_grupo_1/blob/feature/motor-cumplimiento-willi/Prompts_Proyecto.md)
-- 🔗 [Invariantes de arquitectura](https://github.com/cecordobat/ISIA_grupo_1/blob/feature/motor-cumplimiento-willi/context/invariantes.md)
+-  [Historial completo de commits](https://github.com/cecordobat/ISIA_grupo_1/commits/feature/motor-cumplimiento-willi)
+-  [Workflow de CI/CD](https://github.com/cecordobat/ISIA_grupo_1/blob/feature/motor-cumplimiento-willi/.github/workflows/ci.yml)
+-  [Matriz de trazabilidad requisitos→código→tests](https://github.com/cecordobat/ISIA_grupo_1/blob/feature/motor-cumplimiento-willi/context/traceability_matrix.md)
+-  [Reglas de negocio normativas](https://github.com/cecordobat/ISIA_grupo_1/blob/feature/motor-cumplimiento-willi/context/business_rules.md)
+-  [Documentación de prompts de IA usados](https://github.com/cecordobat/ISIA_grupo_1/blob/feature/motor-cumplimiento-willi/Prompts_Proyecto.md)
+-  [Invariantes de arquitectura](https://github.com/cecordobat/ISIA_grupo_1/blob/feature/motor-cumplimiento-willi/context/invariantes.md)
 
 ### B. Estructura del repositorio (rama feature)
 
@@ -354,7 +354,7 @@ ISIA_grupo_1/
 ### D. Checklist de entrega
 
 ```markdown
-## ✅ Checklist de validación antes de entregar
+## Checklist de validación antes de entregar
 
 ### Documentación
 - [ ] Este documento guardado como `docs/Entregable3_Construccion_Pruebas.md`
