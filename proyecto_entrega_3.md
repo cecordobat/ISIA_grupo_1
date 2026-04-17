@@ -357,16 +357,15 @@ ISIA_grupo_1/
 ## Checklist de validación antes de entregar
 
 ### Documentación
-- [ ] Este documento guardado como `docs/Entregable3_Construccion_Pruebas.md`
-- [ ] Portada actualizada con nombres completos y código estudiantil
+- [ ] Este documento
 - [ ] Tabla de contenidos funcional (generada con [TOC] o plugin de VS Code)
-- [ ] Enlaces del repositorio verificados y accesibles públicamente
+- [ ] Enlaces del repositorio
 
 ### Código
 - [ ] Rama `feature/motor-cumplimiento-willi` actualizada y estable
 - [ ] Último commit con mensaje descriptivo y fecha reciente
 - [ ] Tests ejecutándose sin errores en CI/CD
-- [ ] Cobertura de código ≥80% verificada
+- [ ] Cobertura de código verificada
 
 ### Pruebas
 - [ ] Reporte de cobertura generado y disponible en `backend/htmlcov/`
@@ -377,9 +376,4 @@ ISIA_grupo_1/
 - [ ] Archivo `Prompts_Proyecto.md` actualizado con últimos prompts usados
 - [ ] Commits con co-autoría de IA correctamente etiquetados
 - [ ] Declaración de uso de IA incluida en este documento
-
-### Entrega
-- [ ] Archivo .md subido al repositorio en carpeta `docs/`
-- [ ] Link al documento incluido en la descripción del Pull Request (si aplica)
-- [ ] Notificación al instructor con enlace al entregable
 ```
