@@ -2,7 +2,7 @@
 name: validate-rounding-rules
 description: Verify that all calculations in a module strictly adhere to the ROUND_HALF_UP decimal rounding rule.
 context: fork
-agent: qa_rules_auditor
+agent: qa-rules-auditor
 allowed-tools: Read Grep
 ---
 

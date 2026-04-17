@@ -89,3 +89,90 @@ class ParametrosRepository:
             tramos_retencion_383=tramos_dto,
             vigencia_anio=snapshot.vigencia_anio,
         )
+
+    async def crear_snapshot(
+        self,
+        smmlv: float,
+        uvt: float,
+        pct_salud: float,
+        pct_pension: float,
+        tabla_arl_json: str,
+        vigencia_anio: int,
+    ) -> SnapshotNormativo:
+        """
+        Crea un snapshot normativo para un año nuevo.
+        INV-04: nunca sobreescribe un snapshot existente.
+        """
+        existing = await self.get_snapshot_por_anio(vigencia_anio)
+        if existing is not None:
+            raise ValueError(f"Ya existe un snapshot para el año {vigencia_anio}. Usa un año nuevo.")
+
+        snapshot = SnapshotNormativo(
+            smmlv=smmlv,
+            uvt=uvt,
+            pct_salud=pct_salud,
+            pct_pension=pct_pension,
+            tabla_arl_json=tabla_arl_json,
+            vigencia_anio=vigencia_anio,
+        )
+        self._db.add(snapshot)
+        await self._db.flush()
+        return snapshot
+
+    async def crear_ciiu(
+        self,
+        codigo_ciiu: str,
+        descripcion: str,
+        pct_costos_presuntos: float,
+        vigente_desde: date,
+    ) -> TablaParametroCIIU:
+        """Crea una nueva entrada CIIU. Los registros históricos no se modifican."""
+        ciiu = TablaParametroCIIU(
+            codigo_ciiu=codigo_ciiu,
+            descripcion=descripcion,
+            pct_costos_presuntos=pct_costos_presuntos,
+            vigente_desde=vigente_desde,
+        )
+        self._db.add(ciiu)
+        await self._db.flush()
+        return ciiu
+
+    async def crear_tramo_retencion(
+        self,
+        uvt_desde: float,
+        uvt_hasta: float | None,
+        tarifa_marginal: float,
+        uvt_deduccion: float,
+        vigente_desde: date,
+    ) -> TablaRetencion383:
+        """Crea un nuevo tramo Art. 383. Los tramos históricos no se modifican."""
+        tramo = TablaRetencion383(
+            uvt_desde=uvt_desde,
+            uvt_hasta=uvt_hasta,
+            tarifa_marginal=tarifa_marginal,
+            uvt_deduccion=uvt_deduccion,
+            vigente_desde=vigente_desde,
+        )
+        self._db.add(tramo)
+        await self._db.flush()
+        return tramo
+
+    async def listar_snapshots(self) -> list[SnapshotNormativo]:
+        result = await self._db.execute(
+            select(SnapshotNormativo).order_by(SnapshotNormativo.vigencia_anio.desc())
+        )
+        return list(result.scalars().all())
+
+    async def listar_ciiu(self) -> list[TablaParametroCIIU]:
+        result = await self._db.execute(
+            select(TablaParametroCIIU).order_by(TablaParametroCIIU.codigo_ciiu)
+        )
+        return list(result.scalars().all())
+
+    async def listar_tramos_retencion_todos(self) -> list[TablaRetencion383]:
+        result = await self._db.execute(
+            select(TablaRetencion383).order_by(
+                TablaRetencion383.vigente_desde.desc(), TablaRetencion383.uvt_desde
+            )
+        )
+        return list(result.scalars().all())

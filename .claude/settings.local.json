@@ -1,9 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -c \"import src.api.main\")",
-      "Bash(python -m pip install -q email-validator)",
-      "Bash(python -c \"from src.api.main import app; print\\('OK'\\)\")"
+      "Bash(cd backend && python -c \"import src.api.main\")",
+      "Bash(cd backend && python -c \"from src.api.main import app; print('OK')\")",
+      "Bash(cd backend && python -m pip install -q email-validator)",
+      "Bash(python -m pytest tests -v --tb=short)",
+      "Read(//home/user/.config/superpowers/worktrees/motor-cumplimiento-colombia/fase1-mfa-contador/**)",
+      "Bash(python -m ruff check src/infrastructure/models/usuario_mfa.py tests/test_mfa_auth.py)",
+      "Bash(python -m pytest tests/test_mfa_auth.py::test_mfa_repo_crear_config tests/test_mfa_auth.py::test_mfa_repo_activar -v)"
     ]
   }
 }

@@ -1,71 +1,59 @@
-# Visión del Producto
-**Motor de Cumplimiento Tributario y Seguridad Social para Contratistas Independientes — Colombia**
+﻿# Vision del Producto
 
----
+**Motor de Cumplimiento Tributario y Seguridad Social para Contratistas Independientes - Colombia**
 
-## El Problema
+## Problema que resuelve
+El producto busca asistir a contratistas independientes que deben autoliquidar aportes y retenciones sin apoyo contable especializado, reduciendo errores y riesgo sancionatorio.
 
-Colombia tiene cerca de **10 millones de trabajadores independientes** (41.3% del mercado laboral, DANE 2025). Estos contratistas deben autoliquidar mensualmente sus aportes al Sistema de Seguridad Social Integral (SSSI) y sus retenciones en la fuente. Sin embargo:
+## Propuesta de valor
+El sistema:
 
-- No tienen formación contable para aplicar la **Regla del 40%** del Art. 244, Ley 1955/2019.
-- No saben identificar su **código CIIU** ni los costos presuntos de la Resolución DIAN 209/2020.
-- Calculan cada contrato de forma aislada, generando un **IBC inferior al real**.
-- No saben cuándo aplica el **Piso de Protección Social** (Decreto 1174/2020) ni sus implicaciones para la pensión futura.
-- Desconocen la dependencia circular entre **aportes y retención** (Art. 383 E.T.).
+1. Guia al contratista paso a paso desde ingresos hasta resumen final.
+2. Consolida multiples contratos en un unico IBC mensual.
+3. Aplica costos presuntos segun CIIU.
+4. Explica el Piso de Proteccion Social cuando aplica.
+5. Calcula aportes antes de retencion para respetar la dependencia normativa.
+6. Genera una pre-liquidacion en PDF.
+7. Guarda historico auditable con snapshot normativo.
 
-Las sanciones de la **UGPP** alcanzan hasta el **200% de lo adeudado más intereses moratorios** — un riesgo financiero devastador para quienes simplemente no sabían cómo calcular.
-
----
-
-## La Solución
-
-Un **Motor de Cumplimiento** tipo "TurboTax colombiano" que:
-
-1. Guía al contratista paso a paso desde sus ingresos brutos hasta el resumen listo para digitar en la PILA.
-2. Consolida automáticamente múltiples contratos simultáneos en un único IBC mensual.
-3. Aplica costos presuntos según el código CIIU sin que el usuario sepa qué es eso.
-4. Detecta cuando el ingreso es menor a 1 SMMLV y presenta las opciones del Piso de Protección Social con lenguaje claro.
-5. Calcula la retención en la fuente después de deducir los aportes (en el orden correcto).
-6. Genera una **pre-liquidación en PDF** lista para ser transcrita al operador PILA.
-7. Guarda un **historial auditable** con snapshot normativo para responder ante cualquier fiscalización de la UGPP.
-
----
-
-## Para Quién
-
+## Actores objetivo
 | Actor | Necesidad principal |
 |---|---|
-| **Contratista independiente** (usuario principal) | Calcular sin error y sin conocimientos contables |
-| **Contador/Asesor tributario** | Gestionar múltiples clientes de forma eficiente y reducir errores manuales |
-| **Entidad contratante** (indirectamente) | Verificar que el contratista pagó aportes antes de procesar el honorario (Art. 108 E.T.) |
+| Contratista independiente | Calcular correctamente sin conocimientos tecnicos |
+| Contador o asesor tributario | Revisar multiples clientes y validar liquidaciones |
+| Entidad contratante | Verificar cumplimiento antes de pagar honorarios |
 
----
+## Alcance actual
+- Registro de perfil del contratista.
+- Registro y consolidacion de contratos.
+- Calculo de IBC, aportes y retencion.
+- Historial de liquidaciones con snapshot normativo.
+- Flujo de revision por contador y confirmacion del contratista.
+- Generacion de PDF resumen.
 
-## Propuesta de Valor Diferencial
+## Capacidades pendientes priorizadas
+Las siguientes capacidades forman parte del alcance objetivo definido en la segunda entrega del proyecto, pero aun no se consideran totalmente implementadas en el estado actual del sistema:
 
-| Capacidad | Operadores PILA | Simuladores UGPP | Software Contable | **Este Motor** |
-|---|---|---|---|---|
-| Regla del 40% | ❌ | ⚠️ | ❌ | ✅ |
-| Costos presuntos CIIU | ❌ | ❌ | ❌ | ✅ |
-| Múltiples contratos consolidados | ❌ | ❌ | ❌ | ✅ |
-| Proporcionalidad por días | ❌ | ❌ | ❌ | ✅ |
-| Piso Protección Social | ❌ | ❌ | ❌ | ✅ |
-| Retención con depuración de aportes | ❌ | ❌ | ⚠️ | ✅ |
-| PDF exportable | ❌ | ❌ | ❌ | ✅ |
-| Historial auditable | ❌ | ❌ | ❌ | ✅ |
+1. Administracion funcional de parametros normativos por rol administrador.
+2. Portal o vista de verificacion para entidad contratante.
+3. Rol administrador visible como actor operativo del producto.
+4. MFA para contador o asesor tributario.
+5. Comparacion entre liquidaciones de distintos periodos.
+6. Evidencia de cumplimiento mas clara para terceros autorizados.
 
----
+## Fuera de alcance
+- No genera archivo plano Tipo 2 PILA.
+- No integra APIs de UGPP, DIAN ni operadores PILA.
+- No reemplaza asesoria contable certificada.
+- No valida ingresos contra facturacion electronica real.
+- No realiza el pago, solo entrega el resumen para transcripcion.
 
-## Límites del Alcance (Lo que NO hace)
+## Vision futura
+La arquitectura debe permitir incorporar cambios regulatorios futuros, especialmente los derivados de la Ley 2381 de 2024 y ajustes anuales de SMMLV, UVT, ARL, CIIU o tabla de retencion.
 
-- ❌ No genera el archivo plano Tipo 2 de la PILA.
-- ❌ No se integra con SOI, Mi Planilla, UGPP ni DIAN.
-- ❌ No es un asesor tributario certificado — incluye disclaimer legal.
-- ❌ No valida los ingresos contra la facturación electrónica real de la DIAN.
-- ❌ No paga aportes — genera el resumen para que el usuario lo transcriba.
+La vision futura tambien incluye:
 
----
-
-## Visión a Futuro
-
-Con la entrada en vigencia de la **Ley 2381 de 2024** (reforma pensional), el contratante pasará a ser responsable de retener y girar el 16% de pensión. El sistema debe diseñarse desde hoy con la flexibilidad de incorporar este nuevo flujo sin reescribir la arquitectura base.
+- administracion segura de tablas y snapshots normativos sin hardcode operativo;
+- autenticacion reforzada para roles con acceso a multiples clientes;
+- consulta de cumplimiento por actores terceros autorizados;
+- comparacion historica entre periodos para facilitar auditoria y toma de decisiones.

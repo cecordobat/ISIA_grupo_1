@@ -38,3 +38,9 @@ class Usuario(Base):
         back_populates="contador",
         lazy="select",
     )
+    mfa_config: Mapped["UsuarioMFAConfig | None"] = relationship(  # type: ignore[name-defined]
+        "UsuarioMFAConfig",
+        back_populates="usuario",
+        uselist=False,
+        lazy="select",
+    )

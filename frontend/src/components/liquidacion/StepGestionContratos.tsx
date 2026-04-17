@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { contratosApi } from '../../api/contratos'
 import type { ContratoCreate, ContratoResponse, NivelARL } from '../../api/contratos'
 import { useLiquidacionStore } from '../../store/liquidacionStore'
@@ -23,6 +23,7 @@ export function StepGestionContratos() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showForm, setShowForm] = useState(false)
   const [editingContratoId, setEditingContratoId] = useState<string | null>(null)
   const [form, setForm] = useState<ContratoCreate>({
     perfil_id: perfilId ?? '',
@@ -35,6 +36,7 @@ export function StepGestionContratos() {
 
   const resetForm = () => {
     setEditingContratoId(null)
+    setShowForm(false)
     setForm({
       perfil_id: perfilId ?? '',
       entidad_contratante: '',
@@ -46,237 +48,205 @@ export function StepGestionContratos() {
   }
 
   const cargarContratos = async () => {
-    if (!perfilId) {
-      setLoading(false)
-      setError('No se encontro el perfil seleccionado. Regrese al paso anterior.')
-      return
-    }
-
+    if (!perfilId) return
     setLoading(true)
-    setError(null)
     try {
       const data = await contratosApi.listar(perfilId)
       setContratos(data)
     } catch {
-      setError('No se pudieron cargar los contratos del perfil. Intente nuevamente.')
+      setError('Error al cargar contratos.')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    setForm((current) => ({ ...current, perfil_id: perfilId ?? '' }))
     void cargarContratos()
   }, [perfilId])
 
   const handleGuardarContrato = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!perfilId) return
-
     setSaving(true)
-    setError(null)
     try {
-      const payload: ContratoCreate = {
-        ...form,
-        perfil_id: perfilId,
-        fecha_fin: form.fecha_fin || undefined,
-      }
-
+      const payload = { ...form, perfil_id: perfilId, fecha_fin: form.fecha_fin || undefined }
       if (editingContratoId) {
-        await contratosApi.actualizar(editingContratoId, {
-          entidad_contratante: payload.entidad_contratante,
-          valor_bruto_mensual: payload.valor_bruto_mensual,
-          nivel_arl: payload.nivel_arl,
-          fecha_inicio: payload.fecha_inicio,
-          fecha_fin: payload.fecha_fin,
-        })
+        await contratosApi.actualizar(editingContratoId, payload)
       } else {
         await contratosApi.crear(payload)
       }
-
       resetForm()
       await cargarContratos()
     } catch {
-      setError('No fue posible guardar el contrato. Verifique fechas, valor mensual y nivel ARL.')
+      setError('Error al guardar contrato.')
     } finally {
       setSaving(false)
     }
   }
 
-  const handleEliminarContrato = async (contratoId: string) => {
-    setError(null)
+  const handleEliminarContrato = async (id: string) => {
     try {
-      await contratosApi.eliminar(contratoId)
+      await contratosApi.eliminar(id)
       await cargarContratos()
     } catch {
-      setError('No fue posible eliminar el contrato. Intente nuevamente.')
+      setError('Error al eliminar.')
     }
   }
 
   const handleEditarContrato = (contrato: ContratoResponse) => {
     setEditingContratoId(contrato.id)
-    setError(null)
-    setForm({
-      perfil_id: contrato.perfil_id,
-      entidad_contratante: contrato.entidad_contratante,
-      valor_bruto_mensual: contrato.valor_bruto_mensual,
-      nivel_arl: contrato.nivel_arl,
-      fecha_inicio: contrato.fecha_inicio,
-      fecha_fin: contrato.fecha_fin ?? '',
-    })
+    setForm({ ...contrato, fecha_fin: contrato.fecha_fin ?? '' })
+    setShowForm(true)
   }
 
-  const hayProporcionalidad = form.fecha_inicio && !form.fecha_inicio.endsWith('-01')
-  const valorNumerico = Number(form.valor_bruto_mensual)
-  const advertirTope = Number.isFinite(valorNumerico) && valorNumerico > 0 && valorNumerico >= 35_587_500
+  const totalBruto = contratos.reduce((acc, c) => acc + Number(c.valor_bruto_mensual), 0)
 
   return (
-    <div className="wizard-step">
-      <h2>Registrar Contratos</h2>
-      <p className="step-description">
-        Ingrese todos los contratos activos del periodo. El motor consolidara los ingresos y tomara el nivel ARL mas alto para la liquidacion.
-      </p>
-      <p className="nota-neto">
-        Las fechas deben reflejar la vigencia real del contrato. Pueden cruzar varios anos; la liquidacion solo tomara los dias que correspondan al periodo elegido.
-      </p>
-
-      {error && <div className="error-banner">{error}</div>}
-
-      <form onSubmit={handleGuardarContrato} className="contrato-form">
-        <div className="field field-wide">
-          <label htmlFor="entidad">Entidad contratante</label>
-          <input
-            id="entidad"
-            value={form.entidad_contratante}
-            onChange={(e) => setForm({ ...form, entidad_contratante: e.target.value })}
-            required
-          />
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#181c20] mb-2 font-['Inter'] antialiased">Relación de Contratos</h1>
+          <p className="text-[#434655] max-w-md antialiased">Registre todos sus vínculos contractuales activos para determinar el Ingreso Base de Cotización (IBC).</p>
         </div>
-
-        <div className="field">
-          <label htmlFor="valor">Valor bruto mensual</label>
-          <input
-            id="valor"
-            type="number"
-            min="1"
-            step="0.01"
-            value={form.valor_bruto_mensual}
-            onChange={(e) => setForm({ ...form, valor_bruto_mensual: e.target.value })}
-            required
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="arl">Nivel ARL</label>
-          <select
-            id="arl"
-            value={form.nivel_arl}
-            onChange={(e) => setForm({ ...form, nivel_arl: e.target.value as NivelARL })}
-          >
-            {NIVELES_ARL.map((nivel) => (
-              <option key={nivel} value={nivel}>
-                {nivel}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="field">
-          <label htmlFor="inicio">Fecha de inicio</label>
-          <input
-            id="inicio"
-            type="date"
-            value={form.fecha_inicio}
-            onChange={(e) => setForm({ ...form, fecha_inicio: e.target.value })}
-            required
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="fin">Fecha de fin</label>
-          <input
-            id="fin"
-            type="date"
-            value={form.fecha_fin}
-            onChange={(e) => setForm({ ...form, fecha_fin: e.target.value })}
-          />
-        </div>
-
-        <div className="wizard-actions">
-          <button type="submit" className="btn-primary" disabled={saving || !perfilId}>
-            {saving ? 'Guardando...' : editingContratoId ? 'Guardar cambios' : 'Agregar contrato'}
-          </button>
-          {editingContratoId && (
-            <button type="button" className="btn-secondary" onClick={resetForm}>
-              Cancelar edicion
-            </button>
-          )}
-        </div>
-      </form>
-
-      {hayProporcionalidad && (
-        <div className="aviso-requerido">
-          La fecha de inicio no coincide con el dia 1. El sistema aplicara proporcionalidad por dias.
-        </div>
-      )}
-
-      {advertirTope && (
-        <div className="aviso-tope">
-          Este contrato supera aproximadamente 25 SMMLV mensuales. El IBC final podria ser topado.
-        </div>
-      )}
-
-      <section className="contratos-lista">
-        <h3>Contratos registrados</h3>
-        {loading ? (
-          <div className="loading-state">Cargando contratos...</div>
-        ) : contratos.length === 0 ? (
-          <div className="aviso-requerido">
-            Debe registrar al menos un contrato para calcular la liquidacion.
-          </div>
-        ) : (
-          contratos.map((contrato) => (
-            <div key={contrato.id} className="card contrato-card">
-              <div>
-                <strong>{contrato.entidad_contratante}</strong>
-                <div className="perfil-detalles contrato-detalles">
-                  <span>Valor: {formatCOP(contrato.valor_bruto_mensual)}</span>
-                  <span>ARL: {contrato.nivel_arl}</span>
-                  <span>Inicio: {contrato.fecha_inicio}</span>
-                  <span>Fin: {contrato.fecha_fin ?? 'Abierto'}</span>
-                </div>
-              </div>
-              <div className="wizard-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => handleEditarContrato(contrato)}
-                >
-                  Editar
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => void handleEliminarContrato(contrato.id)}
-                >
-                  Eliminar
-                </button>
-              </div>
-            </div>
-          ))
-        )}
-      </section>
-
-      <div className="wizard-actions">
-        <button className="btn-secondary" onClick={retrocederPaso}>
-          Atras
-        </button>
-        <button
-          className="btn-primary"
-          onClick={avanzarPaso}
-          disabled={loading || contratos.length === 0}
+        <button 
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-2 bg-gradient-to-br from-[#004ac6] to-[#2563eb] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-200 hover:scale-105 active:scale-95 transition-all"
         >
-          Continuar al periodo
+          <span className="material-symbols-outlined text-lg">add</span>
+          Agregar Contrato
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="bg-white p-6 rounded-xl shadow-[0_12px_32px_-4px_rgba(0,74,198,0.1)] border border-blue-50">
+          <h3 className="text-lg font-bold mb-4">{editingContratoId ? 'Editar Contrato' : 'Nuevo Contrato'}</h3>
+          <form onSubmit={handleGuardarContrato} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="col-span-1 md:col-span-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Entidad contratante</label>
+              <input 
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                value={form.entidad_contratante}
+                onChange={e => setForm({...form, entidad_contratante: e.target.value})}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Valor bruto mensual</label>
+              <input 
+                type="number"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                value={form.valor_bruto_mensual}
+                onChange={e => setForm({...form, valor_bruto_mensual: e.target.value})}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nivel ARL</label>
+              <select 
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                value={form.nivel_arl}
+                onChange={e => setForm({...form, nivel_arl: e.target.value as NivelARL})}
+              >
+                {NIVELES_ARL.map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha inicio</label>
+              <input 
+                type="date"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                value={form.fecha_inicio}
+                onChange={e => setForm({...form, fecha_inicio: e.target.value})}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha fin (opcional)</label>
+              <input 
+                type="date"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                value={form.fecha_fin}
+                onChange={e => setForm({...form, fecha_fin: e.target.value})}
+              />
+            </div>
+            <div className="col-span-1 md:col-span-2 flex gap-3 mt-2">
+              <button type="submit" disabled={saving} className="bg-[#004ac6] text-white px-6 py-2 rounded-lg font-bold text-sm">
+                Guardar
+              </button>
+              <button type="button" onClick={resetForm} className="bg-slate-200 text-slate-600 px-6 py-2 rounded-lg font-bold text-sm">
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {error && <div className="p-3 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100">{error}</div>}
+
+      {/* Table Card */}
+      <div className="bg-white rounded-xl shadow-[0_12px_32px_-4px_rgba(0,74,198,0.08)] overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-blue-50/30 border-b border-slate-100">
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#434655]">Entidad</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#434655]">Valor Bruto (COP)</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#434655] text-center">Nivel ARL</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#434655] text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-10 text-center text-slate-400 font-bold animate-pulse">Cargando contratos...</td>
+                </tr>
+              ) : contratos.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-10 text-center text-slate-400 font-medium">No hay contratos registrados.</td>
+                </tr>
+              ) : (
+                contratos.map((c) => (
+                  <tr key={c.id} className="hover:bg-blue-50/10 transition-colors">
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-[#495c95] text-sm">business</span>
+                        </div>
+                        <span className="font-semibold text-[#181c20]">{c.entidad_contratante}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 font-medium text-[#181c20]">{formatCOP(c.valor_bruto_mensual)}</td>
+                    <td className="px-6 py-5 text-center">
+                      <span className="px-3 py-1 rounded-full bg-blue-100 text-[#004ac6] text-xs font-bold uppercase">Nivel {c.nivel_arl}</span>
+                    </td>
+                    <td className="px-6 py-5 text-right">
+                      <button onClick={() => handleEditarContrato(c)} className="material-symbols-outlined text-slate-400 hover:text-[#004ac6] transition-colors p-1">edit</button>
+                      <button onClick={() => void handleEliminarContrato(c.id)} className="material-symbols-outlined text-slate-400 hover:text-red-600 transition-colors p-1 ml-2">delete</button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="p-6 bg-slate-50/50 flex justify-between items-center border-t border-slate-100">
+          <span className="text-xs font-bold text-[#434655]">TOTAL BRUTO ACUMULADO</span>
+          <span className="text-lg font-extrabold text-[#004ac6]">{formatCOP(totalBruto.toString())} COP</span>
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center pt-4">
+        <button onClick={retrocederPaso} className="text-slate-500 font-bold hover:text-slate-700 transition-colors flex items-center gap-2">
+          <span className="material-symbols-outlined">arrow_back</span>
+          Regresar
+        </button>
+        <button 
+          onClick={avanzarPaso} 
+          disabled={contratos.length === 0}
+          className="bg-[#004ac6] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center gap-2"
+        >
+          Continuar
+          <span className="material-symbols-outlined">arrow_forward</span>
         </button>
       </div>
     </div>

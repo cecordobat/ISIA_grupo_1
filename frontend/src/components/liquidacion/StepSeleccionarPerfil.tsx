@@ -2,9 +2,34 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { perfilesApi } from '../../api/perfiles'
 import { contadorApi } from '../../api/contador'
-import type { PerfilCreate, PerfilResponse } from '../../api/perfiles'
+import type { PerfilCreate, PerfilResponse, CIIUOption } from '../../api/perfiles'
 import { HistorialLiquidaciones } from './HistorialLiquidaciones'
 import { useLiquidacionStore } from '../../store/liquidacionStore'
+
+const EPS_COLOMBIA = [
+  'Compensar EPS',
+  'Sanitas EPS',
+  'Nueva EPS',
+  'Sura EPS',
+  'Famisanar',
+  'Salud Total EPS',
+  'Coosalud EPS',
+  'Mutual Ser EPS',
+  'Capital Salud EPS',
+  'Cajacopi EPS',
+  'Comfenalco Valle EPS',
+  'AIC EPS Indígena',
+  'Asmet Salud EPS',
+  'Emssanar EPS',
+]
+
+const AFP_COLOMBIA = [
+  'Colpensiones',
+  'Porvenir',
+  'Protección',
+  'Colfondos',
+  'Skandia AFP',
+]
 
 const emptyPerfilForm: PerfilCreate = {
   tipo_documento: 'CC',
@@ -18,6 +43,7 @@ const emptyPerfilForm: PerfilCreate = {
 
 export function StepSeleccionarPerfil() {
   const [perfiles, setPerfiles] = useState<PerfilResponse[]>([])
+  const [ciiuOpciones, setCiiuOpciones] = useState<CIIUOption[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -36,11 +62,15 @@ export function StepSeleccionarPerfil() {
     setLoading(true)
     setError(null)
     try {
-      const data = await perfilesApi.listar()
+      const [data, ciiu] = await Promise.all([
+        perfilesApi.listar(),
+        perfilesApi.listarCiiu(),
+      ])
       setPerfiles(data)
+      setCiiuOpciones(ciiu)
       setSelectedId((current) => current ?? data[0]?.id ?? null)
     } catch {
-      setError('No se pudieron cargar los perfiles. Verifique su conexion e intente nuevamente.')
+      setError('No se pudieron cargar los perfiles.')
     } finally {
       setLoading(false)
     }
@@ -57,10 +87,20 @@ export function StepSeleccionarPerfil() {
     setCreateWarning(null)
   }
 
-  const handleContinuar = () => {
-    if (!selectedId) return
-    setPeriodo(selectedId, anio, mes)
-    avanzarPaso()
+  const handleEditarPerfil = (perfil: PerfilResponse) => {
+    setEditingPerfilId(perfil.id)
+    setNewPerfil({
+      tipo_documento: perfil.tipo_documento,
+      numero_documento: perfil.numero_documento,
+      nombre_completo: perfil.nombre_completo,
+      eps: perfil.eps,
+      afp: perfil.afp,
+      ciiu_codigo: perfil.ciiu_codigo,
+      confirmar_ciiu_alto: false,
+    })
+    setIsCreating(true)
+    setCreateError(null)
+    setCreateWarning(null)
   }
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
@@ -82,37 +122,16 @@ export function StepSeleccionarPerfil() {
         const detail = err.response.data?.detail
         if (detail?.requires_ciiu_confirmation) {
           setCreateWarning(
-            `El CIIU seleccionado tiene costos presuntos de ${(Number(detail.pct_costos_presuntos) * 100).toFixed(2)}%. Debe confirmar expresamente antes de guardar el perfil.`
+            `El CIIU seleccionado tiene costos presuntos del ${(Number(detail.pct_costos_presuntos) * 100).toFixed(2)}%. Debe confirmar.`
           )
+          setNewPerfil((current) => ({ ...current, confirmar_ciiu_alto: true }))
           return
         }
       }
-      setCreateError(
-        editingPerfilId
-          ? 'Error al actualizar el perfil. Asegurese de que el CIIU sea valido.'
-          : 'Error al crear perfil. Asegurese de que el CIIU sea valido.'
-      )
+      setCreateError('Error al guardar perfil.')
     } finally {
       setCreating(false)
     }
-  }
-
-  const handleEditarPerfil = () => {
-    const perfil = perfiles.find((item) => item.id === selectedId)
-    if (!perfil) return
-    setEditingPerfilId(perfil.id)
-    setNewPerfil({
-      tipo_documento: perfil.tipo_documento,
-      numero_documento: perfil.numero_documento,
-      nombre_completo: perfil.nombre_completo,
-      eps: perfil.eps,
-      afp: perfil.afp,
-      ciiu_codigo: perfil.ciiu_codigo,
-      confirmar_ciiu_alto: false,
-    })
-    setCreateError(null)
-    setCreateWarning(null)
-    setIsCreating(true)
   }
 
   const handleCompartirConContador = async () => {
@@ -126,249 +145,261 @@ export function StepSeleccionarPerfil() {
       setShareMessage(respuesta.message)
       setContadorEmail('')
     } catch {
-      setShareMessage(
-        'No fue posible vincular el contador. Verifique que exista una cuenta con tipo Contador y ese email.'
-      )
+      setShareMessage('No fue posible vincular el contador.')
     }
   }
 
   if (loading) {
-    return (
-      <div className="wizard-step">
-        <h2>Seleccionar Perfil</h2>
-        <div className="loading-state">Cargando perfiles...</div>
-      </div>
-    )
+    return <div className="text-center p-10 font-bold text-slate-400">Cargando perfiles...</div>
   }
 
   if (error) {
-    return (
-      <div className="wizard-step">
-        <h2>Seleccionar Perfil</h2>
-        <div className="error-banner">{error}</div>
-      </div>
-    )
+    return <div className="error-banner">{error}</div>
   }
 
-  if (isCreating) {
-    return (
-      <div className="wizard-step">
-        <h2>{editingPerfilId ? 'Editar Perfil' : 'Crear Nuevo Perfil'}</h2>
-        <form onSubmit={handleCreateSubmit} className="perfil-form">
-          <div className="field">
-            <label htmlFor="perfil-tipo-documento">Tipo Documento</label>
-            <select
-              id="perfil-tipo-documento"
-              value={newPerfil.tipo_documento}
-              onChange={(e) => setNewPerfil({ ...newPerfil, tipo_documento: e.target.value })}
-            >
-              <option value="CC">CC</option>
-              <option value="CE">CE</option>
-              <option value="PEP">PEP</option>
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="perfil-numero-documento">Numero Documento</label>
-            <input
-              id="perfil-numero-documento"
-              required
-              value={newPerfil.numero_documento}
-              onChange={(e) => setNewPerfil({ ...newPerfil, numero_documento: e.target.value })}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="perfil-nombre-completo">Nombre Completo</label>
-            <input
-              id="perfil-nombre-completo"
-              required
-              value={newPerfil.nombre_completo}
-              onChange={(e) => setNewPerfil({ ...newPerfil, nombre_completo: e.target.value })}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="perfil-eps">EPS</label>
-            <input
-              id="perfil-eps"
-              required
-              value={newPerfil.eps}
-              onChange={(e) => setNewPerfil({ ...newPerfil, eps: e.target.value })}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="perfil-afp">AFP</label>
-            <input
-              id="perfil-afp"
-              required
-              value={newPerfil.afp}
-              onChange={(e) => setNewPerfil({ ...newPerfil, afp: e.target.value })}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="perfil-ciiu">Codigo CIIU</label>
-            <input
-              id="perfil-ciiu"
-              required
-              value={newPerfil.ciiu_codigo}
-              onChange={(e) => setNewPerfil({ ...newPerfil, ciiu_codigo: e.target.value })}
-            />
-          </div>
-          {createWarning && <div className="aviso-requerido">{createWarning}</div>}
-          {createWarning && (
-            <label className="checkbox-inline">
-              <input
-                type="checkbox"
-                checked={newPerfil.confirmar_ciiu_alto ?? false}
-                onChange={(e) =>
-                  setNewPerfil({ ...newPerfil, confirmar_ciiu_alto: e.target.checked })
-                }
-              />
-              Confirmo que este CIIU corresponde exactamente a mi actividad economica.
-            </label>
-          )}
-          {createError && <div className="error-banner">{createError}</div>}
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-            <button type="submit" className="btn-primary" disabled={creating}>
-              {creating ? 'Guardando...' : editingPerfilId ? 'Guardar cambios' : 'Guardar Perfil'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsCreating(false)
-                resetFormState()
-              }}
-              className="btn-secondary"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </div>
-    )
-  }
-
-  if (perfiles.length === 0) {
-    return (
-      <div className="wizard-step">
-        <h2>Seleccionar Perfil</h2>
-        <div className="aviso-requerido">
-          No tiene perfiles registrados. Por favor, cree su perfil de contratista.
+  return (
+    <div className="space-y-6 antialiased font-['Inter']">
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#181c20] mb-2">Tu Perfil de Contratista</h1>
+          <p className="text-[#434655] max-w-md">
+            Seleccione o cree la identidad para la cual realizara el reporte de este mes.
+          </p>
         </div>
         <button
-          className="btn-primary"
           onClick={() => {
             resetFormState()
             setIsCreating(true)
           }}
-          style={{ marginTop: '1rem' }}
+          className="flex items-center gap-2 bg-[#004ac6] text-white px-6 py-2 rounded-lg font-bold text-sm shadow-md"
         >
-          Crear Nuevo Perfil
+          <span className="material-symbols-outlined text-lg">person_add</span>
+          Nuevo Perfil
         </button>
       </div>
-    )
-  }
 
-  return (
-    <div className="wizard-step">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Seleccionar Perfil</h2>
-        <div className="wizard-actions">
-          {selectedId && (
-            <button className="btn-secondary" onClick={handleEditarPerfil}>
-              Editar perfil
-            </button>
-          )}
-          <button
-            className="btn-secondary"
-            onClick={() => {
-              resetFormState()
-              setIsCreating(true)
-            }}
-          >
-            Crear Perfil
-          </button>
+      {isCreating && (
+        <div className="bg-white p-8 rounded-2xl shadow-xl border border-blue-50">
+          <h3 className="text-xl font-bold mb-6 text-[#181c20]">
+            {editingPerfilId ? 'Editar Perfil' : 'Crear Perfil'}
+          </h3>
+          <form onSubmit={handleCreateSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1" htmlFor="tipo-documento">
+                Tipo Documento
+              </label>
+              <select
+                id="tipo-documento"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"
+                value={newPerfil.tipo_documento}
+                onChange={(e) => setNewPerfil({ ...newPerfil, tipo_documento: e.target.value })}
+              >
+                <option value="CC">Cedula de Ciudadania</option>
+                <option value="CE">Cedula de Extranjeria</option>
+                <option value="PEP">PEP</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1" htmlFor="numero-documento">
+                Numero Documento
+              </label>
+              <input
+                id="numero-documento"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"
+                value={newPerfil.numero_documento}
+                onChange={(e) => setNewPerfil({ ...newPerfil, numero_documento: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="col-span-1 md:col-span-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1" htmlFor="nombre-completo">
+                Nombre Completo
+              </label>
+              <input
+                id="nombre-completo"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"
+                value={newPerfil.nombre_completo}
+                onChange={(e) => setNewPerfil({ ...newPerfil, nombre_completo: e.target.value })}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1" htmlFor="ciiu-principal">
+                CIIU Principal
+              </label>
+              <select
+                id="ciiu-principal"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"
+                value={newPerfil.ciiu_codigo}
+                onChange={(e) => setNewPerfil({ ...newPerfil, ciiu_codigo: e.target.value, confirmar_ciiu_alto: false })}
+                required
+              >
+                <option value="">Seleccione actividad CIIU...</option>
+                {ciiuOpciones.map((c) => (
+                  <option key={c.codigo} value={c.codigo}>
+                    {c.codigo} — {c.descripcion}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1" htmlFor="eps">
+                EPS
+              </label>
+              <select
+                id="eps"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"
+                value={newPerfil.eps}
+                onChange={(e) => setNewPerfil({ ...newPerfil, eps: e.target.value })}
+                required
+              >
+                <option value="">Seleccione EPS...</option>
+                {EPS_COLOMBIA.map((e) => (
+                  <option key={e} value={e}>{e}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="col-span-1 md:col-span-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1" htmlFor="afp">
+                AFP / Fondo de Pensiones
+              </label>
+              <select
+                id="afp"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"
+                value={newPerfil.afp}
+                onChange={(e) => setNewPerfil({ ...newPerfil, afp: e.target.value })}
+                required
+              >
+                <option value="">Seleccione AFP...</option>
+                {AFP_COLOMBIA.map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="col-span-1 md:col-span-2 space-y-2">
+              {createWarning && (
+                <div className="p-3 bg-amber-50 text-amber-700 text-xs rounded-lg border border-amber-100">
+                  {createWarning}
+                </div>
+              )}
+              {createError && (
+                <div className="p-3 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100">
+                  {createError}
+                </div>
+              )}
+            </div>
+
+            <div className="col-span-1 md:col-span-2 flex gap-4 mt-4">
+              <button type="submit" disabled={creating} className="bg-[#004ac6] text-white px-10 py-3 rounded-xl font-bold">
+                {creating ? 'Guardando...' : 'Guardar Perfil'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreating(false)
+                  resetFormState()
+                }}
+                className="bg-slate-100 text-slate-600 px-10 py-3 rounded-xl font-bold"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
         </div>
-      </div>
-      <p className="step-description">
-        Seleccione el perfil de contratista para el cual desea realizar la liquidacion:
-      </p>
+      )}
 
-      <div className="perfiles-lista">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {perfiles.map((perfil) => (
           <div
             key={perfil.id}
-            className={`card ${selectedId === perfil.id ? 'selected' : ''}`}
             onClick={() => setSelectedId(perfil.id)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && setSelectedId(perfil.id)}
+            className={`cursor-pointer p-6 rounded-2xl border-2 transition-all ${
+              selectedId === perfil.id ? 'border-[#004ac6] bg-blue-50/30' : 'border-slate-100 bg-white hover:border-slate-200'
+            }`}
           >
-            <div className="perfil-header">
-              <input
-                type="radio"
-                name="perfil"
-                id={`perfil-${perfil.id}`}
-                checked={selectedId === perfil.id}
-                onChange={() => setSelectedId(perfil.id)}
-              />
-              <label htmlFor={`perfil-${perfil.id}`}>
-                <strong>{perfil.nombre_completo}</strong>
-              </label>
+            <div className="flex justify-between items-start mb-4">
+              <div
+                className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  selectedId === perfil.id ? 'bg-[#004ac6] text-white' : 'bg-slate-100 text-slate-400'
+                }`}
+              >
+                <span className="material-symbols-outlined">person</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="text-slate-500 hover:text-[#004ac6]"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleEditarPerfil(perfil)
+                  }}
+                  aria-label={`Editar perfil ${perfil.nombre_completo}`}
+                >
+                  <span className="material-symbols-outlined">edit</span>
+                </button>
+                {selectedId === perfil.id && (
+                  <span className="text-[#004ac6] material-symbols-outlined">check_circle</span>
+                )}
+              </div>
             </div>
-            <div className="perfil-detalles">
-              <span>
+            <h4 className="font-bold text-lg text-[#181c20]">{perfil.nombre_completo}</h4>
+            <div className="text-sm text-slate-500 mt-2 space-y-1">
+              <p>
                 {perfil.tipo_documento}: {perfil.numero_documento}
-              </span>
-              <span>CIIU: {perfil.ciiu_codigo}</span>
-              {perfil.pct_costos_presuntos && (
-                <span>
-                  Costos presuntos: {(Number(perfil.pct_costos_presuntos) * 100).toFixed(2)}%
-                </span>
-              )}
-              <span>
+              </p>
+              <p>
+                Actividad CIIU: <span className="font-bold text-slate-700">{perfil.ciiu_codigo}</span>
+              </p>
+              <p>
                 EPS: {perfil.eps} | AFP: {perfil.afp}
-              </span>
-              {perfil.pct_costos_presuntos && Number(perfil.pct_costos_presuntos) > 0.6 && (
-                <span className="perfil-estado-inactivo">
-                  Requiere validacion especial: costos presuntos superiores al 60%.
-                </span>
-              )}
+              </p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="wizard-actions">
-        <button className="btn-primary" onClick={handleContinuar} disabled={selectedId === null}>
-          Continuar
-        </button>
-      </div>
-
       {selectedId && (
-        <div className="share-panel">
-          <h3>Autorizar contador</h3>
-          <p className="step-description">
-            Ingrese el email de un contador registrado para darle acceso de lectura a este perfil y su historial.
-          </p>
-          <p className="nota-neto">
-            El contador debe haberse registrado antes con tipo de cuenta Contador y luego ingresar desde la pantalla normal de login.
-          </p>
-          <div className="wizard-actions">
+        <div className="flex justify-between items-center pt-6">
+          <div className="flex gap-2">
             <input
-              className="share-input"
-              type="email"
-              placeholder="contador@correo.com"
+              className="p-3 bg-white border border-slate-200 rounded-lg text-sm w-64"
+              placeholder="Vincular email del contador"
               value={contadorEmail}
               onChange={(e) => setContadorEmail(e.target.value)}
             />
-            <button className="btn-secondary" onClick={() => void handleCompartirConContador()}>
-              Vincular contador
+            <button
+              onClick={() => void handleCompartirConContador()}
+              className="bg-slate-100 text-slate-600 px-4 rounded-lg font-bold text-sm"
+            >
+              Vincular
             </button>
           </div>
-          {shareMessage && <div className="aviso-tope">{shareMessage}</div>}
+          <button
+            onClick={() => {
+              setPeriodo(selectedId, anio, mes)
+              avanzarPaso()
+            }}
+            className="bg-[#004ac6] text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-blue-100 hover:scale-105 transition-all flex items-center gap-2"
+          >
+            Continuar
+            <span className="material-symbols-outlined">arrow_forward</span>
+          </button>
         </div>
       )}
 
-      {selectedId && <HistorialLiquidaciones perfilId={selectedId} />}
+      {shareMessage && <p className="text-xs text-blue-600 font-medium">{shareMessage}</p>}
+
+      {selectedId && (
+        <div className="mt-10 pt-10 border-t border-slate-100">
+          <HistorialLiquidaciones perfilId={selectedId} />
+        </div>
+      )}
     </div>
   )
 }

@@ -7,6 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.api.dependencies import get_current_user
+from src.api.schemas.comparacion import (
+    ComparacionResponse,
+    DiferenciasComparacion,
+    LiquidacionResumen,
+)
 from src.application.services.liquidacion_service import LiquidacionEjecutada, LiquidacionService
 from src.domain.enums import NivelARL, OpcionPisoProteccion, RolUsuario
 from src.domain.exceptions import (
@@ -27,6 +32,7 @@ from src.infrastructure.repositories.acceso_contador_repo import AccesoContadorR
 from src.infrastructure.repositories.liquidacion_confirmacion_repo import (
     LiquidacionConfirmacionRepository,
 )
+from src.infrastructure.repositories.parametros_repo import ParametrosRepository
 
 router = APIRouter(prefix="/liquidaciones", tags=["liquidaciones"])
 
@@ -386,6 +392,22 @@ async def calcular_liquidacion(
     return await _resultado_a_response(ejecucion, db)
 
 
+class CIIUItemResponse(BaseModel):
+    codigo: str
+    descripcion: str
+    pct_costos_presuntos: str
+
+
+@router.get("/codigos-ciiu", response_model=list[CIIUItemResponse])
+async def listar_ciiu(
+    _: Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[CIIUItemResponse]:
+    """CIIU codes available for profile creation."""
+    items = await ParametrosRepository(db).listar_ciiu()
+    return [CIIUItemResponse(codigo=c.codigo_ciiu, descripcion=c.descripcion, pct_costos_presuntos=str(c.pct_costos_presuntos)) for c in items]
+
+
 @router.get("/anios-disponibles", response_model=AniosDisponiblesResponse)
 async def anios_disponibles(
     current_user: Usuario = Depends(get_current_user),
@@ -441,6 +463,71 @@ async def historial(
         )
         for liq in liquidaciones
     ]
+
+
+@router.get("/comparar", response_model=ComparacionResponse)
+async def comparar_periodos(
+    periodo_a: str,
+    periodo_b: str,
+    perfil_id: str,
+    current_user: Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ComparacionResponse:
+    """
+    Compara dos liquidaciones de distintos períodos para un perfil.
+    Solo el contratista dueño o su contador autorizado puede comparar.
+    Ref: RF-12, HU-13, INV-03
+    """
+    if not await _puede_ver_perfil(perfil_id, current_user, db):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tiene permiso para consultar las liquidaciones de este perfil.",
+        )
+
+    result = await db.execute(
+        select(LiquidacionPeriodo)
+        .where(LiquidacionPeriodo.perfil_id == perfil_id)
+        .order_by(LiquidacionPeriodo.periodo.desc())
+    )
+    todas = list(result.scalars().all())
+    mapa = {liq.periodo: liq for liq in todas}
+
+    liq_a = mapa.get(periodo_a)
+    liq_b = mapa.get(periodo_b)
+
+    faltantes = [p for p, l in [(periodo_a, liq_a), (periodo_b, liq_b)] if l is None]
+    if faltantes:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No existen liquidaciones para los períodos: {', '.join(faltantes)}",
+        )
+
+    def _resumen(liq: LiquidacionPeriodo) -> LiquidacionResumen:
+        return LiquidacionResumen(
+            periodo=liq.periodo,
+            ingreso_bruto_total=float(liq.ingreso_bruto_total),
+            ibc=float(liq.ibc),
+            aporte_salud=float(liq.aporte_salud),
+            aporte_pension=float(liq.aporte_pension),
+            aporte_arl=float(liq.aporte_arl),
+            retencion_fuente=float(liq.retencion_fuente),
+            base_gravable_retencion=float(liq.base_gravable_retencion),
+        )
+
+    resumen_a = _resumen(liq_a)  # type: ignore[arg-type]
+    resumen_b = _resumen(liq_b)  # type: ignore[arg-type]
+
+    diferencias = DiferenciasComparacion(
+        ingreso_bruto_total=resumen_b.ingreso_bruto_total - resumen_a.ingreso_bruto_total,
+        ibc=resumen_b.ibc - resumen_a.ibc,
+        aporte_salud=resumen_b.aporte_salud - resumen_a.aporte_salud,
+        aporte_pension=resumen_b.aporte_pension - resumen_a.aporte_pension,
+        aporte_arl=resumen_b.aporte_arl - resumen_a.aporte_arl,
+        retencion_fuente=resumen_b.retencion_fuente - resumen_a.retencion_fuente,
+        base_gravable_retencion=resumen_b.base_gravable_retencion - resumen_a.base_gravable_retencion,
+    )
+
+    return ComparacionResponse(periodo_a=resumen_a, periodo_b=resumen_b, diferencias=diferencias)
 
 
 @router.get("/{liquidacion_id}", response_model=LiquidacionDetalleResponse)

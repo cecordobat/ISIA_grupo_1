@@ -22,9 +22,19 @@ export interface PerfilCreate {
   confirmar_ciiu_alto?: boolean
 }
 
+export interface CIIUOption {
+  codigo: string
+  descripcion: string
+  pct_costos_presuntos: string
+}
+
 export const perfilesApi = {
   listar: async (): Promise<PerfilResponse[]> => {
     const { data } = await apiClient.get<PerfilResponse[]>('/perfiles/')
+    return data
+  },
+  listarCiiu: async (): Promise<CIIUOption[]> => {
+    const { data } = await apiClient.get<CIIUOption[]>('/parametros/ciiu')
     return data
   },
   crear: async (perfil: PerfilCreate): Promise<PerfilResponse> => {

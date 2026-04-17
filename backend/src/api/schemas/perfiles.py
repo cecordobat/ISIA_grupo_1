@@ -6,6 +6,12 @@ from pydantic import BaseModel, ConfigDict, field_serializer
 from src.domain.enums import EstadoPerfil, TipoDocumento
 
 
+class CIIUListItem(BaseModel):
+    codigo: str
+    descripcion: str
+    pct_costos_presuntos: str
+
+
 class PerfilCreate(BaseModel):
     """Payload para crear un nuevo perfil de contratista."""
 

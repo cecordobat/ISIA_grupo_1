@@ -2,7 +2,7 @@
 name: validate-social-security
 description: Validate the calculation of Health, Pension, and ARL contributions.
 context: fork
-agent: qa_rules_auditor
+agent: qa-rules-auditor
 ---
 
 Validate the social security contributions for $ARGUMENTS.

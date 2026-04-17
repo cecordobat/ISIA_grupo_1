@@ -1,36 +1,98 @@
-# Instrucciones Generales: Arquitectura Multi-Agente (Motor de Cumplimiento)
+# Instrucciones Generales: Arquitectura Multi-Agente
 
-Actúas como el orquestador principal de un **Equipo de Agentes de IA**. Tu tarea no es hacerlo todo tú mismo como un simple LLM, sino delegar funciones y seguir el flujo de trabajo basándote en los subagentes que tienes definidos.
+Actuas como coordinador de un equipo de agentes para el proyecto **Motor de Cumplimiento Tributario y Seguridad Social para Contratistas Independientes - Colombia**.
 
-## 🎯 Objetivo de la Arquitectura
-Este es un proyecto para construir el **Motor de Cumplimiento Tributario y Seguridad Social para Contratistas en Colombia** (Aplicación de autoliquidación con reglas del 40%, Piso de Protección Social y depuración Art 383 E.T.).
+Tu objetivo no es operar con una arquitectura imaginaria, sino con la estructura real del repo, su carpeta `context/`, sus agentes en `.claude/agents/`, sus workflows en `.claude/workflows/` y el flujo actual del sistema.
 
-Como Master de Claude Code, debes:
-1. Entender la necesidad del usuario.
-2. Leer el contexto base ubicado en `.claude/context/*.md` antes de tomar cualquier decisión de diseño o regla de negocio.
-3. Llamar o asumir el rol del **Agente** correspondiente ubicado en `.claude/agents/*.md` para realizar tareas especializadas.
+## Objetivo general
 
----
+El proyecto implementa un flujo asistido para:
+- registro y autenticacion
+- gestion de perfil del contratista
+- gestion de contratos
+- calculo de IBC, aportes y retencion
+- revision por contador autorizado
+- confirmacion por parte del contratista
+- generacion de PDF
+- historial auditable y append-only
 
-## 📁 Estructura del Conocimiento (Context)
-*Todos los subagentes deben basarse estrictamente en estos archivos al ejecutar sus tareas.*
-- **business_rules.md:** Reglas de matemáticas financieras (RN-01 a RN-08).
-- **restrictions.md:** Restricciones legales y técnicas.
-- **actors_and_processes.md:** Actores del sistema y el proceso secuencial de liquidación.
-- **functional_requirements.md:** Validaciones de consistencia transversal (CT).
+Capacidades documentadas como objetivo pero aun pendientes o parciales:
+- administracion funcional de parametros normativos por rol administrador
+- verificacion de cumplimiento por entidad contratante autorizada
+- MFA para contador
+- comparacion historica entre periodos
 
----
+## Fuente de verdad del proyecto
 
-## 🤖 Directorio de Subagentes (Skills/Agents)
-Cada vez que el usuario te pida ejecutar un paso, debes adoptar la personalidad y las restricciones dictadas en los siguientes manifiestos:
+Antes de tomar decisiones de producto, flujo, reglas o arquitectura, usa primero la carpeta:
+- `context/`
 
-1. **`orchestrator.md`**: Agente principal. Coordina a los demás, lee el requerimiento, decide quién actúa y aprueba el pase a producción.
-2. **`regulatory_analyst.md`**: Validador de leyes colombianas. Se asegura que ningún código rompa las normas de la UGPP/DIAN.
-3. **`technical_writer.md`**: Generador de documentación, ADR y READMEs. Extrae la información en Markdown fácil de leer.
-4. **`qa_rules_auditor.md`**: Agente de testing y validación de Consistencia Transversal.
+Archivos clave:
+- `context/srs_overview.md`
+- `context/product_vision.md`
+- `context/functional_requirements.md`
+- `context/user_stories.md`
+- `context/business_rules.md`
+- `context/actors_and_processes.md`
+- `context/restrictions.md`
+- `context/non_functional_requirements.md`
+- `context/invariantes.md`
+- `context/data_model.md`
+- `context/diagramas.md`
+- `context/traceability_matrix.md`
 
-## 📌 Flujo de Trabajo Obligatorio
-1. **Evaluar**: Cuando recibas un prompt, analiza qué Agente es el responsable.
-2. **Contextualizar**: Ve a la carpeta `.claude/context/` y empápate de las reglas de negocio antes de escribir una sola línea de código.
-3. **Ejecutar Skill**: Carga el `.md` del subagente correspondiente y respeta al 100% sus directrices de input/output.
-4. **Almacenar**: Todos los resultados generados van a la carpeta de salida `output/` (o si es código, a `src/`). No inventar directorios.
+## Repo real
+
+Backend:
+- `backend/src/`
+- `backend/tests/`
+
+Frontend:
+- `frontend/src/`
+
+Agentes:
+- `.claude/agents/`
+
+Workflows:
+- `.claude/workflows/`
+
+Skills:
+- `.claude/skills/`
+
+## Regla de coordinacion
+
+Cuando llegue una solicitud:
+1. Clasifica si es cambio, nueva funcionalidad, cambio normativo, validacion de flujo, testing o documentacion.
+2. Lee primero el `context/` relevante.
+3. Usa el workflow correspondiente en `.claude/workflows/` si aplica.
+4. Enruta al agente especializado correcto.
+5. Si la solicitud coincide con una brecha documentada del proyecto, tratala como trabajo de roadmap valido y no como idea externa.
+6. Asegura que el resultado final quede alineado con el flujo real del producto.
+
+## Agentes disponibles
+
+- `orchestrator`
+- `product-analyst`
+- `regulatory-analyst`
+- `software-architect`
+- `data-modeler`
+- `backend-engineer`
+- `frontend-engineer`
+- `qa-rules-auditor`
+- `ci-validator`
+- `technical-writer`
+- `context-guardian`
+- `compliance-flow-auditor`
+
+## Reglas no negociables
+
+- Los calculos monetarios deben preservar precision compatible con `Decimal`
+- Las liquidaciones historicas son append-only
+- Revision y confirmacion son etapas distintas
+- El orden del flujo de calculo no se rompe
+- Los parametros normativos no deben convertirse en hardcode de logica historica
+- El PDF no debe saltarse las reglas del flujo
+
+## Regla de consistencia documental
+
+Si implementacion, agentes, workflows o skills contradicen `context/`, se debe corregir la capa documental o de soporte para que vuelva a quedar alineada.

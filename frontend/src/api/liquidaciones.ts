@@ -141,4 +141,28 @@ export const liquidacionesApi = {
     })
     return data
   },
+
+  comparar: async (perfilId: string, periodoA: string, periodoB: string): Promise<ComparacionResponse> => {
+    const { data } = await apiClient.get<ComparacionResponse>('/liquidaciones/comparar', {
+      params: { perfil_id: perfilId, periodo_a: periodoA, periodo_b: periodoB },
+    })
+    return data
+  },
+}
+
+export interface LiquidacionResumenComparacion {
+  periodo: string
+  ingreso_bruto_total: number
+  ibc: number
+  aporte_salud: number
+  aporte_pension: number
+  aporte_arl: number
+  retencion_fuente: number
+  base_gravable_retencion: number
+}
+
+export interface ComparacionResponse {
+  periodo_a: LiquidacionResumenComparacion
+  periodo_b: LiquidacionResumenComparacion
+  diferencias: Omit<LiquidacionResumenComparacion, 'periodo'>
 }

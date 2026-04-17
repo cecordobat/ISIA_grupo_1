@@ -11,6 +11,7 @@ requires-python = ">=3.12"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 addopts = "-v --tb=short"
 
 [tool.ruff]
@@ -26,6 +27,9 @@ ignore = [
     "F821",   # undefined name — falso positivo en forward references de SQLAlchemy relationships
     "E741",   # ambiguous variable name — NivelARL.I es un valor legal real (Nivel I de ARL)
 ]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
 
 [tool.mypy]
 python_version = "3.12"

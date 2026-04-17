@@ -6,6 +6,8 @@ import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { LiquidacionWizardPage } from './pages/LiquidacionWizardPage'
 import { ContadorDashboardPage } from './pages/ContadorDashboardPage'
+import { AdminParametrosPage } from './pages/AdminParametrosPage'
+import { EntidadContratantePage } from './pages/EntidadContratantePage'
 import { useAuthStore } from './store/authStore'
 
 const queryClient = new QueryClient({
@@ -17,7 +19,7 @@ function ProtectedRoute({
   requiredRole,
 }: {
   children: React.ReactNode
-  requiredRole?: 'CONTRATISTA' | 'CONTADOR'
+  requiredRole?: 'CONTRATISTA' | 'CONTADOR' | 'ADMIN' | 'ENTIDAD_CONTRATANTE'
 }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const rol = useAuthStore((s) => s.rol)
@@ -25,7 +27,10 @@ function ProtectedRoute({
   if (!isAuthenticated) return <Navigate to="/login" replace />
   if (!rol) return <Navigate to="/login" replace />
   if (requiredRole && rol !== requiredRole) {
-    return <Navigate to={rol === 'CONTADOR' ? '/contador' : '/liquidacion'} replace />
+    if (rol === 'CONTADOR') return <Navigate to="/contador" replace />
+    if (rol === 'ADMIN') return <Navigate to="/admin" replace />
+    if (rol === 'ENTIDAD_CONTRATANTE') return <Navigate to="/verificacion" replace />
+    return <Navigate to="/liquidacion" replace />
   }
   return <>{children}</>
 }
@@ -34,7 +39,10 @@ function RootRedirect() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const rol = useAuthStore((s) => s.rol)
   if (!isAuthenticated || !rol) return <Navigate to="/login" replace />
-  return <Navigate to={rol === 'CONTADOR' ? '/contador' : '/liquidacion'} replace />
+  if (rol === 'CONTADOR') return <Navigate to="/contador" replace />
+  if (rol === 'ADMIN') return <Navigate to="/admin" replace />
+  if (rol === 'ENTIDAD_CONTRATANTE') return <Navigate to="/verificacion" replace />
+  return <Navigate to="/liquidacion" replace />
 }
 
 createRoot(document.getElementById('root')!).render(
@@ -58,6 +66,22 @@ createRoot(document.getElementById('root')!).render(
             element={
               <ProtectedRoute requiredRole="CONTADOR">
                 <ContadorDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <AdminParametrosPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/verificacion"
+            element={
+              <ProtectedRoute requiredRole="ENTIDAD_CONTRATANTE">
+                <EntidadContratantePage />
               </ProtectedRoute>
             }
           />
