@@ -2,7 +2,7 @@
 name: derive-test-cases
 description: Derive test cases from functional requirements and business rules. Use when a new feature is added or modified.
 context: fork
-agent: qa_rules_auditor
+agent: qa-rules-auditor
 allowed-tools: Read Grep
 ---
 

@@ -2,7 +2,7 @@
 name: validate-ibc-calculation
 description: Validate the IBC calculation for a specific scenario to ensure it complies with the 40% rule and limits.
 context: fork
-agent: qa_rules_auditor
+agent: qa-rules-auditor
 ---
 
 Validate the IBC calculation for the scenario: $ARGUMENTS.

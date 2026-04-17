@@ -1,59 +1,79 @@
-# Workflow — Cambio Normativo (Actualización de Parámetros Legales)
+# Workflow - Regulatory Change
 
-> **Cuándo usar:** Cuando hay un cambio de ley que afecte SMMLV, UVT, porcentajes de cotización, tabla CIIU o tabla Art. 383 E.T. (ej: cada 1 de enero, nueva reforma tributaria, decreto UGPP).
+When to use:
+Use this workflow when a law, decree, resolution, yearly parameter, or tax table changes.
 
----
+Examples:
+- new SMMLV
+- new UVT
+- change to withholding table
+- change to CIIU presumptive costs
+- change to ARL rates
+- pension reform impact on contractor flow
 
-## Paso 1 — regulatory_analyst
+## Step 1 - Identify the normative impact
 
-**Input:** Decreto/Resolución oficial con los nuevos valores.
+Read and summarize:
+- legal source
+- effective date
+- parameters that change
+- whether the change affects only future liquidations
 
-**Tarea:** Verificar qué tablas de parámetros deben actualizarse y en qué fecha entra en vigencia.
+Cross-check with:
+- `context/restrictions.md`
+- `context/invariantes.md`
+- `context/non_functional_requirements.md`
 
-**Output:** `output/reports/cambio_normativo_{año}_{tipo}.md` con:
-- Norma afectada (decreto, resolución, artículo)
-- Parámetros que cambian (lista con valor anterior → valor nuevo)
-- Fecha de vigencia
-- Impacto en cálculos existentes (¿afecta liquidaciones históricas? — la respuesta siempre es NO, solo las futuras)
+Output:
+- concise impact note with affected rules and dates
 
----
+## Step 2 - Map the change to the current implementation
 
-## Paso 2 — data_modeler
+In this repo, regulatory data currently affects:
+- `backend/src/infrastructure/models/snapshot_normativo.py`
+- `backend/src/infrastructure/models/tabla_ciiu.py`
+- `backend/src/infrastructure/models/tabla_retencion_383.py`
+- `backend/src/infrastructure/bootstrap.py`
+- repositories that read normative parameters
 
-**Input:** `output/reports/cambio_normativo_{año}_{tipo}.md`
+Important rule:
+- historical liquidations must not change
+- new values apply only to future calculations
+- snapshots used by existing liquidations remain immutable
 
-**Tarea:** Preparar el script SQL de inserción de nuevos registros en las tablas normativas (nunca UPDATE de registros existentes).
+## Step 3 - Implement without breaking auditability
 
-**Output:** Script en `src/infrastructure/migrations/YYYYMMDD_cambio_normativo_{tipo}.sql` con:
-```sql
--- Ejemplo: Nuevo SMMLV 2026
-INSERT INTO tabla_parametro_normativo (smmlv, uvt, vigencia_anio, created_at)
-VALUES (1500000.00, 52000.00, 2026, NOW());
-```
+Preferred behavior:
+- add new rows or new vigencies
+- do not rewrite historical records
+- do not invalidate existing snapshots
 
-> ⚠️ NUNCA DELETE ni UPDATE de registros vigentes a períodos pasados.
+If startup seeds are used:
+- update seed/bootstrap logic carefully
+- ensure it remains deterministic
 
----
+If a broader admin flow is introduced later:
+- keep the same principle of temporal validity and append-only history
 
-## Paso 3 — qa_rules_auditor
+## Step 4 - Validate calculations
 
-**Input:** Script SQL de migración.
+Must verify:
+- IBC floor and ceiling still behave correctly
+- contributions still use Decimal-safe math
+- withholding uses the correct table for the selected period
+- historical liquidations still reproduce prior outputs
 
-**Tarea:** Verificar que los nuevos parámetros producen el resultado correcto en los casos de prueba estándar.
+Recommended checks:
+- `python -m pytest backend/tests -v`
+- coverage run if core calculation paths changed
 
-**Output:** Ejecutar `tests/regression/` con los nuevos valores y confirmar que:
-- CT-01 pasa con el nuevo SMMLV como piso.
-- CT-02 pasa con los nuevos porcentajes.
-- Las liquidaciones históricas NO cambian (snapshot inmutable).
+## Step 5 - Update project context
 
----
+If the regulatory change alters requirements or future scope, update:
+- `context/restrictions.md`
+- `context/business_rules.md`
+- `context/non_functional_requirements.md`
+- `context/product_vision.md`
+- `context/traceability_matrix.md` if needed
 
-## Paso 4 — technical_writer
-
-**Input:** Reporte de cambio normativo + resultado de tests.
-
-**Tarea:** Actualizar documentación.
-
-**Output:**
-- `docs/releases/` con nota de versión normativa.
-- Actualizar `CLAUDE.md` si hay nueva fecha de vigencia relevante.
+If the change affects future architecture, document that explicitly in context files.

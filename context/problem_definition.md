@@ -1,21 +1,22 @@
-# Definición del Problema y su Relevancia
+﻿# Definicion del Problema y su Relevancia
 
 ## Contexto
-El marco regulatorio colombiano exige a los trabajadores independientes la total responsabilidad de autoliquidar y pagar sus aportes al Sistema de Seguridad Social Integral (SSSI) y sus retenciones por honorarios. Este ecosistema es normativamente complejo, fragmentado y altamente punitivo.
+El marco regulatorio colombiano exige a los trabajadores independientes autoliquidar y pagar sus aportes al Sistema de Seguridad Social Integral (SSSI) y sus retenciones por honorarios. El ecosistema es complejo, fragmentado y altamente punitivo.
 
-## El Problema
-Los contratistas carecen de formación tributaria para ejecutar procesos de liquidación con múltiples variables y reglas:
+## El problema
+Los contratistas suelen carecer de formacion contable y tributaria para ejecutar calculos con multiples variables y reglas:
 
-1. **Cálculo de IBC con múltiples contratos:** La ley obliga a consolidar y aplicar la regla del 40% a la totalidad del ingreso, pero muchos lo hacen aisladamente y tributan mal sobre el IBC.
-2. **Ignorancia del código CIIU:** La Resolución DIAN 209 (2020) dicta costos presuntos diferenciados por CIIU. Escoger mal genera sobrepago de aportes o riesgos por sanción UGPP.
-3. **Proporcionalidad por días** Cálculos parciales por mes calendarios. Se obvian a menudo.
-4. **Piso de Protección Social:** Ingresos bajo 1 SMMLV (2025: muchos colombianos están acá). Muchos no saben qué decidir, si cotizar pleno o entrar a BEPS.
-5. **Dependencia Circular en Retención en la Fuente:** Para calcular la retención se deben descontar los aportes a S y P. No se puede calcular uno sin el otro.
+1. Calculo de IBC con multiples contratos: la ley obliga a consolidar ingresos y aplicar la regla del 40% sobre la totalidad.
+2. Seleccion del codigo CIIU: elegir mal el codigo puede alterar costos presuntos y generar sobrepago o riesgo UGPP.
+3. Proporcionalidad por dias: los contratos parciales del mes suelen liquidarse de forma incorrecta.
+4. Piso de Proteccion Social: muchos usuarios no saben cuando aplica BEPS o cuando conviene cotizar sobre 1 SMMLV.
+5. Dependencia entre aportes y retencion: la base de retencion depende de salud y pension, por lo que el orden del calculo es obligatorio.
 
-## Brecha Tecnológica
-Pese al incremento agresivo de fiscalización de la UGPP (con sanciones que incluso doblan o llegan al 200% del pago dejado de hacer):
-- **Opeadores PILA:** Solamente recaudan lo digitado. No verifican, orientan ni calculan el IBC.
-- **Simuladores UGPP/DIAN:** Inconexos, no guardan histórico de auditorías.
-- **Software Contable:** Dirigido a facturación, IVA o nómina dependiente.
+## Brecha tecnologica
+Las soluciones existentes presentan limitaciones claras:
 
-Ninguna solución actual integra la regla del 40%, costos presuntos por CIIU y la deducción encadenada de salud y retención en la fuente en un flujo guiado y unificado tipo "TurboTax" para Colombia.
+- Operadores PILA: recaudan lo digitado, pero no orientan ni validan el calculo del IBC.
+- Simuladores UGPP o DIAN: no integran el flujo completo ni guardan historicos auditables.
+- Software contable generalista: se enfoca en facturacion, IVA o nomina dependiente.
+
+No existe una solucion unificada tipo TurboTax colombiano que combine regla del 40%, costos presuntos por CIIU, consolidacion de contratos, piso de proteccion social, retencion depurada y evidencia historica.

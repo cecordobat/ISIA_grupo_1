@@ -1,57 +1,72 @@
-# Workflow — Generación de Tests (QA Sprint)
+# Workflow - Test Generation
 
-> **Cuándo usar:** Cuando el `backend_engineer` entrega un módulo nuevo o modifica lógica existente, o cuando el `qa_rules_auditor` detecta cobertura insuficiente en `tests/`.
+When to use:
+Use this workflow when new logic is added, an existing flow changes, a bug is fixed, or CI fails because coverage or regression protection is insufficient.
 
----
+## Step 1 - Determine what changed
 
-## Paso 1 — qa_rules_auditor (Análisis de Cobertura)
+Classify the test need:
+- pure calculation logic
+- repository behavior
+- API endpoint behavior
+- liquidation wizard behavior
+- accountant review and confirmation flow
+- session, login, logout, or protected route behavior
 
-**Input:** Lista de módulos o funciones nuevas/modificadas.
+Map the change to the real test locations in this repo:
+- `backend/tests/unit/engine/`
+- `backend/tests/integration/`
+- `frontend/src/pages/`
+- frontend component or flow tests already present
 
-**Tarea:** Identificar qué reglas RN y validaciones CT requieren cobertura.
+## Step 2 - Choose the right test layer
 
-**Output:** `output/reports/test_plan_{modulo}.md` con:
-- Casos felices (happy path)
-- Casos de borde (IBC en tope máximo 25 SMMLV, contratos de 1 día, Piso de Protección Social)
-- Casos de error (contrato fuera de período, IBC < 1 SMMLV, float en input)
+Use backend unit tests when:
+- validating IBC, contributions, withholding, invariants, or pure calculation logic
 
----
+Use backend integration tests when:
+- validating auth, profiles, contracts, accountant access, append-only history, repositories, or API routes
 
-## Paso 2 — qa_rules_auditor (Implementación)
+Use frontend tests when:
+- validating register, login, logout, wizard navigation, guarded routes, profile editing, or visible flow behavior
 
-**Input:** `output/reports/test_plan_{modulo}.md`
+## Step 3 - Project-specific rules for tests
 
-**Reglas obligatorias al escribir tests:**
-1. Todos los valores monetarios en fixtures usan `Decimal("valor")` — **NUNCA `0.125` como float**.
-2. Los SnapshotNormativo de los fixtures usan valores reales (SMMLV 2025: $1.423.500, UVT 2025: $49.799).
-3. Cada test tiene un nombre que identifica exactamente qué regla prueba (ej: `test_ibc_consolida_multiples_contratos_RN04`).
-4. Las CT (CT-01 a CT-04) tienen su propio archivo de test dedicado.
+- Monetary values must use `Decimal` on backend
+- CT-01 to CT-04 should remain explicitly protected
+- History must remain append-only
+- Review and confirmation should be tested separately
+- If a PDF rule depends on confirmation, cover that behavior
+- If a contador can access only authorized profiles, test authorization boundaries
 
-**Output:**
-```
-tests/
-├── unit/
-│   ├── test_ibc_calculation.py       ← RN-01, RN-02, RN-04, RN-05
-│   ├── test_aportes_sgssi.py         ← RN-03, RN-08
-│   ├── test_retencion_fuente.py      ← RN-07, Art. 383 E.T.
-│   └── test_consistencias_ct.py     ← CT-01, CT-02, CT-03, CT-04
-├── integration/
-│   └── test_flujo_completo.py        ← Ciclo completo de liquidación
-├── regression/
-│   └── test_casos_reales.py          ← Casos con valores reales del DOCX
-└── fixtures/
-    └── parametros_2025.py            ← SMMLV, UVT, CIIU, tabla 383 en Decimal
-```
+## Step 4 - Implement tests in the repo structure
 
----
+Backend examples:
+- engine tests in `backend/tests/unit/engine/`
+- endpoint and repository tests in `backend/tests/integration/`
 
-## Paso 3 — ci_validator
+Frontend examples:
+- end-to-end style flow tests in `frontend/src/pages/AppFlow.test.tsx`
+- component-level behavior in relevant page or component test files
 
-**Input:** Suite de tests generada.
+## Step 5 - Validate with CI-like commands
 
-**Tarea:** Ejecutar los tests y generar reporte.
+Backend lint:
+- `python -m ruff check backend/src backend/tests`
 
-**Output:** Reporte en `output/reports/test_results_{fecha}.md` con:
-- % de cobertura por módulo
-- Tests fallidos con el nombre de la regla RN/CT que rompieron
-- PASS / FAIL global del sprint
+Backend tests:
+- `python -m pytest backend/tests -v`
+
+Backend coverage:
+- run from `backend/`
+- `python -m pytest tests/ -v --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=80`
+
+Frontend:
+- `npm run test -- --reporter=verbose`
+- `npm run build`
+
+## Step 6 - Close the loop
+
+If tests were added because a requirement was missing or unclear, update the related files in `context/`.
+
+If coverage failed in CI, ensure the final local verification reproduces the same command used in `.github/workflows/ci.yml`.
