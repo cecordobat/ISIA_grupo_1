@@ -27,6 +27,9 @@ ignore = [
     "E741",   # ambiguous variable name — NivelARL.I es un valor legal real (Nivel I de ARL)
 ]
 
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
