@@ -181,6 +181,8 @@ export function StepGestionContratos() {
         </div>
       )}
 
+      {error && <div className="p-3 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100">{error}</div>}
+
       {/* Table Card */}
       <div className="bg-white rounded-xl shadow-[0_12px_32px_-4px_rgba(0,74,198,0.08)] overflow-hidden">
         <div className="overflow-x-auto">
@@ -194,7 +196,11 @@ export function StepGestionContratos() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {contratos.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-10 text-center text-slate-400 font-bold animate-pulse">Cargando contratos...</td>
+                </tr>
+              ) : contratos.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-10 text-center text-slate-400 font-medium">No hay contratos registrados.</td>
                 </tr>

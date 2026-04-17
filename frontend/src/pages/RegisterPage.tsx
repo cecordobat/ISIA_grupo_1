@@ -24,8 +24,12 @@ export function RegisterPage() {
         nombre_completo: nombreCompleto,
         rol,
       })
-      setSession(access_token, rolRespuesta)
-      navigate(rolRespuesta === 'CONTADOR' ? '/contador' : '/liquidacion')
+      if (access_token && rolRespuesta) {
+        setSession(access_token, rolRespuesta)
+        navigate(rolRespuesta === 'CONTADOR' ? '/contador' : '/liquidacion')
+      } else {
+        setError('Error al crear la cuenta. Intente de nuevo.')
+      }
     } catch {
       setError('Error al registrar la cuenta. Es posible que el correo ya este en uso.')
     } finally {

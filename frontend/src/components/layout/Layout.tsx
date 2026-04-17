@@ -42,7 +42,6 @@ export function Layout({ children, currentStep, totalSteps, stepLabels }: Layout
               {Array.from({ length: totalSteps }).map((_, i) => {
                 const stepIdx = i + 1
                 const isActive = stepIdx === currentStep
-                const isCompleted = stepIdx < (currentStep || 0)
                 
                 return (
                   <React.Fragment key={i}>

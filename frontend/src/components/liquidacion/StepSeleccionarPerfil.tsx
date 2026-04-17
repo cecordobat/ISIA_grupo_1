@@ -16,8 +16,6 @@ const emptyPerfilForm: PerfilCreate = {
   confirmar_ciiu_alto: false,
 }
 
-export function StepSeleccionarPerfil() {
-  const [perfiles, setPerfiles] = useState<PerfilResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -141,6 +139,10 @@ export function StepSeleccionarPerfil() {
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-1">EPS / Fondo de Salud</label>
               <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" value={newPerfil.eps} onChange={e => setNewPerfil({...newPerfil, eps: e.target.value})} required/>
+            </div>
+            <div className="col-span-1 md:col-span-2 space-y-2">
+              {createWarning && <div className="p-3 bg-amber-50 text-amber-700 text-xs rounded-lg border border-amber-100">{createWarning}</div>}
+              {createError && <div className="p-3 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100">{createError}</div>}
             </div>
             <div className="col-span-1 md:col-span-2 flex gap-4 mt-4">
               <button type="submit" disabled={creating} className="bg-[#004ac6] text-white px-10 py-3 rounded-xl font-bold">{creating ? 'Guardando...' : 'Guardar Perfil'}</button>

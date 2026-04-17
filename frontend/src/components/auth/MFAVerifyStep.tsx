@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { authApi } from '../../api/auth'
 import { useAuthStore } from '../../store/authStore'
 import { useNavigate } from 'react-router-dom'
@@ -41,8 +41,12 @@ export function MFAVerifyStep({ mfaToken, onCancel }: MFAVerifyStepProps) {
     setError(null)
     try {
       const data = await authApi.mfaVerify(mfaToken, fullCode)
-      setSession(data.access_token, data.rol)
-      navigate(data.rol === 'CONTADOR' ? '/contador' : '/liquidacion')
+      if (data.access_token && data.rol) {
+        setSession(data.access_token, data.rol)
+        navigate(data.rol === 'CONTADOR' ? '/contador' : '/liquidacion')
+      } else {
+        setError('Error en la respuesta del servidor.')
+      }
     } catch {
       setError('Código inválido o expirado.')
     } finally {
@@ -78,6 +82,8 @@ export function MFAVerifyStep({ mfaToken, onCancel }: MFAVerifyStepProps) {
               />
             ))}
           </div>
+
+          {error && <div className="mb-4 text-xs font-bold text-red-600 bg-red-50 p-2 rounded">{error}</div>}
 
           <button 
             onClick={handleVerify}
