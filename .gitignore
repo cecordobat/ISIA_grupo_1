@@ -55,6 +55,7 @@ Thumbs.db
 *.parquet
 data/
 models/
+!backend/src/infrastructure/models/
 notebooks/.ipynb_checkpoints/
 
 # Environment & secrets
