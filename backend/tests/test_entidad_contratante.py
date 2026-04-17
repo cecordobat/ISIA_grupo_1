@@ -2,8 +2,9 @@
 Tests unitarios: verificación de cumplimiento por entidad contratante.
 Ref: RF-11, HU-12, RNF-06
 """
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.domain.enums import RolUsuario
 

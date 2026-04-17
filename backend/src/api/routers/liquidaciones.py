@@ -7,7 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.api.dependencies import get_current_user
-from src.api.schemas.comparacion import ComparacionResponse, DiferenciasComparacion, LiquidacionResumen
+from src.api.schemas.comparacion import (
+    ComparacionResponse,
+    DiferenciasComparacion,
+    LiquidacionResumen,
+)
 from src.application.services.liquidacion_service import LiquidacionEjecutada, LiquidacionService
 from src.domain.enums import NivelARL, OpcionPisoProteccion, RolUsuario
 from src.domain.exceptions import (

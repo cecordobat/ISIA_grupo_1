@@ -13,10 +13,8 @@ from src.api.schemas.entidad_contratante import AutorizarAccesoRequest, EstadoCu
 from src.domain.enums import RolUsuario
 from src.infrastructure.database import get_db
 from src.infrastructure.models.liquidacion_periodo import LiquidacionPeriodo
-from src.infrastructure.models.perfil_contratista import PerfilContratista
 from src.infrastructure.models.usuario import Usuario
 from src.infrastructure.repositories.acceso_entidad_repo import AccesoEntidadRepository
-from src.infrastructure.repositories.liquidacion_confirmacion_repo import LiquidacionConfirmacionRepository
 from src.infrastructure.repositories.perfil_repo import PerfilRepository
 from src.infrastructure.repositories.usuario_repo import UsuarioRepository
 

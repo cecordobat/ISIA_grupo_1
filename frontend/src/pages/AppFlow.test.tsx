@@ -13,7 +13,9 @@ const mocks = vi.hoisted(() => ({
   register: vi.fn(),
   login: vi.fn(),
   listarPerfiles: vi.fn(),
+  listarCiiu: vi.fn(),
   crearPerfil: vi.fn(),
+  actualizarPerfil: vi.fn(),
   vincularContador: vi.fn(),
   listarLiquidaciones: vi.fn(),
   obtenerLiquidacion: vi.fn(),
@@ -35,7 +37,9 @@ vi.mock('../api/auth', () => ({
 vi.mock('../api/perfiles', () => ({
   perfilesApi: {
     listar: mocks.listarPerfiles,
+    listarCiiu: mocks.listarCiiu,
     crear: mocks.crearPerfil,
+    actualizar: mocks.actualizarPerfil,
   },
 }))
 
@@ -117,7 +121,9 @@ describe('Flujo principal de autenticacion y sesion', () => {
     mocks.register.mockReset()
     mocks.login.mockReset()
     mocks.listarPerfiles.mockReset()
+    mocks.listarCiiu.mockReset()
     mocks.crearPerfil.mockReset()
+    mocks.actualizarPerfil.mockReset()
     mocks.vincularContador.mockReset()
     mocks.listarLiquidaciones.mockReset()
     mocks.obtenerLiquidacion.mockReset()
@@ -132,6 +138,13 @@ describe('Flujo principal de autenticacion y sesion', () => {
     mocks.obtenerLiquidacion.mockResolvedValue(null)
     mocks.vincularContador.mockResolvedValue({ message: 'ok' })
     mocks.listarContratos.mockResolvedValue([])
+    mocks.listarCiiu.mockResolvedValue([
+      {
+        codigo: '6201',
+        descripcion: 'Actividades de desarrollo de sistemas informaticos',
+        pct_costos_presuntos: '0.60',
+      },
+    ])
   })
 
   it('permite registrarse, crear perfil, cerrar sesion e iniciar sesion nuevamente', async () => {
@@ -155,34 +168,20 @@ describe('Flujo principal de autenticacion y sesion', () => {
       estado: 'ACTIVO',
     })
 
-    mocks.listarPerfiles
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([
-        {
-          id: 'perfil-1',
-          nombre_completo: 'Willi Test',
-          tipo_documento: 'CC',
-          numero_documento: '123456789',
-          eps: 'Nueva EPS',
-          afp: 'Porvenir',
-          ciiu_codigo: '6201',
-          pct_costos_presuntos: '0.60',
-          estado: 'ACTIVO',
-        },
-      ])
-      .mockResolvedValueOnce([
-        {
-          id: 'perfil-1',
-          nombre_completo: 'Willi Test',
-          tipo_documento: 'CC',
-          numero_documento: '123456789',
-          eps: 'Nueva EPS',
-          afp: 'Porvenir',
-          ciiu_codigo: '6201',
-          pct_costos_presuntos: '0.60',
-          estado: 'ACTIVO',
-        },
-      ])
+    const perfilCreado = [
+      {
+        id: 'perfil-1',
+        nombre_completo: 'Willi Test',
+        tipo_documento: 'CC',
+        numero_documento: '123456789',
+        eps: 'Nueva EPS',
+        afp: 'Porvenir',
+        ciiu_codigo: '6201',
+        pct_costos_presuntos: '0.60',
+        estado: 'ACTIVO',
+      },
+    ]
+    mocks.listarPerfiles.mockResolvedValue([])
 
     mocks.login.mockResolvedValue({
       access_token: 'token-login',
@@ -203,9 +202,10 @@ describe('Flujo principal de autenticacion y sesion', () => {
     await user.click(screen.getByRole('button', { name: /Nuevo Perfil/i }))
     await user.type(screen.getByLabelText(/Numero Documento/i), '123456789')
     await user.type(screen.getByLabelText(/Nombre Completo/i), 'Willi Test')
-    await user.type(screen.getByLabelText(/^EPS$/i), 'Nueva EPS')
-    await user.type(screen.getByLabelText(/^AFP$/i), 'Porvenir')
-    await user.type(screen.getByLabelText(/CIIU Principal/i), '6201')
+    await user.selectOptions(screen.getByLabelText(/^EPS$/i), 'Nueva EPS')
+    await user.selectOptions(screen.getByLabelText(/AFP \/ Fondo de Pensiones/i), 'Porvenir')
+    await user.selectOptions(screen.getByLabelText(/CIIU Principal/i), '6201')
+    mocks.listarPerfiles.mockResolvedValue(perfilCreado)
     await user.click(screen.getByRole('button', { name: /Guardar Perfil/i }))
 
     expect(await screen.findByText('Willi Test')).toBeInTheDocument()

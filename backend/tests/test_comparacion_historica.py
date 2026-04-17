@@ -2,7 +2,11 @@
 Tests unitarios: comparación histórica entre períodos.
 Ref: RF-12, HU-13, INV-03
 """
-from src.api.schemas.comparacion import ComparacionResponse, DiferenciasComparacion, LiquidacionResumen
+from src.api.schemas.comparacion import (
+    ComparacionResponse,
+    DiferenciasComparacion,
+    LiquidacionResumen,
+)
 
 
 def test_comparacion_response_schema():

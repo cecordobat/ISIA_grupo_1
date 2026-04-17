@@ -2,9 +2,10 @@
 Tests de administración de parámetros normativos.
 Ref: RF-10, HU-11, RNF-03, INV-04
 """
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 from fastapi import HTTPException
-from unittest.mock import AsyncMock, MagicMock
 
 from src.api.dependencies import require_admin
 from src.domain.enums import RolUsuario
