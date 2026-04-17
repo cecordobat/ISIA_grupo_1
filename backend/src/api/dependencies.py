@@ -41,3 +41,16 @@ async def get_current_user(
         raise credentials_exception
 
     return usuario
+
+
+async def require_admin(
+    current_user: Usuario = Depends(get_current_user),
+) -> Usuario:
+    """Guard: solo usuarios con rol ADMIN pueden acceder."""
+    from src.domain.enums import RolUsuario
+    if current_user.rol != RolUsuario.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acceso restringido al rol Administrador.",
+        )
+    return current_user

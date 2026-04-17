@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Accountant Portal - Revisión de Liquidación</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .compliance-shield {
+            border: 1px solid rgba(195, 198, 215, 0.2);
+            box-shadow: 0 0 15px rgba(0, 74, 198, 0.05);
+        }
+        .glass-panel {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-variant": "#e0e2e7",
+                      "secondary-fixed": "#dbe1ff",
+                      "secondary": "#495c95",
+                      "on-tertiary": "#ffffff",
+                      "inverse-primary": "#b4c5ff",
+                      "error": "#ba1a1a",
+                      "background": "#f7f9fe",
+                      "primary": "#004ac6",
+                      "on-surface": "#181c20",
+                      "on-secondary-container": "#394c84",
+                      "on-primary-fixed-variant": "#003ea8",
+                      "error-container": "#ffdad6",
+                      "surface-container-highest": "#e0e2e7",
+                      "surface": "#f7f9fe",
+                      "primary-fixed": "#dbe1ff",
+                      "outline": "#737686",
+                      "on-tertiary-container": "#ffede6",
+                      "inverse-on-surface": "#eff1f6",
+                      "surface-container-high": "#e6e8ed",
+                      "on-surface-variant": "#434655",
+                      "tertiary-fixed-dim": "#ffb596",
+                      "on-primary-container": "#eeefff",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary-fixed": "#ffdbcd",
+                      "surface-dim": "#d8dadf",
+                      "on-secondary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "on-secondary-fixed-variant": "#31447b",
+                      "surface-container": "#eceef3",
+                      "primary-container": "#2563eb",
+                      "on-tertiary-fixed": "#360f00",
+                      "inverse-surface": "#2d3135",
+                      "on-background": "#181c20",
+                      "on-primary-fixed": "#00174b",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "on-primary": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "tertiary-container": "#bc4800",
+                      "tertiary": "#943700",
+                      "secondary-container": "#acbfff",
+                      "surface-container-low": "#f1f4f9",
+                      "surface-tint": "#0053db",
+                      "outline-variant": "#c3c6d7",
+                      "on-secondary-fixed": "#00174b",
+                      "surface-bright": "#f7f9fe",
+                      "on-tertiary-fixed-variant": "#7d2d00"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              }
+            },
+          }
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen">
+<!-- SideNavBar -->
+<aside class="h-full w-64 fixed left-0 top-0 bg-[#1e3a5f] dark:bg-slate-950 flex flex-col py-6 px-4 z-50">
+<div class="mb-10 px-2">
+<h1 class="text-xl font-bold text-white dark:text-blue-100">Motor de Cumplimiento</h1>
+<p class="text-xs text-blue-100/60 uppercase tracking-widest mt-1">The Sentinel's Clarity</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors hover:bg-white/5 text-blue-100/70" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors bg-white/10 text-white font-semibold" href="#">
+<span class="material-symbols-outlined" data-icon="fact_check">fact_check</span>
+<span class="text-sm font-medium">Audits</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors hover:bg-white/5 text-blue-100/70" href="#">
+<span class="material-symbols-outlined" data-icon="shield">shield</span>
+<span class="text-sm font-medium">Compliance</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors hover:bg-white/5 text-blue-100/70" href="#">
+<span class="material-symbols-outlined" data-icon="assessment">assessment</span>
+<span class="text-sm font-medium">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors hover:bg-white/5 text-blue-100/70" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</nav>
+<div class="mt-auto px-2">
+<button class="w-full py-3 px-4 bg-primary-container text-on-primary-container rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity active:scale-[0.98]">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                New Audit
+            </button>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-64 z-40 bg-[#f7f9fe]/80 dark:bg-slate-900/80 backdrop-blur-xl flex justify-between items-center h-16 px-8 ml-0 w-[calc(100%-16rem)]">
+<div class="flex items-center gap-8">
+<span class="text-lg font-semibold text-slate-900 dark:text-white">Accountant Portal</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-blue-600" href="#">Overview</a>
+<a class="text-sm font-medium text-blue-700 dark:text-blue-400 border-b-2 border-blue-700" href="#">History</a>
+<a class="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-blue-600" href="#">Analysis</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">Export</button>
+<button class="bg-primary px-4 py-2 text-white rounded-lg text-sm font-semibold hover:bg-primary-container transition-colors">Approve All</button>
+<div class="h-8 w-px bg-outline-variant/30 mx-2"></div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-600" data-icon="notifications">notifications</span>
+<img alt="User Avatar" class="w-8 h-8 rounded-full border-2 border-primary/20" data-alt="professional male accountant portrait with glasses in a modern office environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPi414AbROA_b4ANXZYkIyqvxcM852XG3MJ_9fIP_4hwZAvb0NMs4eDQcXI35bqYl5fosUnNHHrRrMsVaESXivn4aOKzgMwKr8eo_M6khz8qAOnI2YxN5TKhoJJu4V7mr1lY3RS0dTwViYUJWCLVTBsmPIjfgn8zM0p0uaJBfy0c1wx2ls_-gcKf8a4NeA98feXMqx_W1mj-QMXaO0iAlVIXtb3GwamumDJkoYn8jYt4b2R9UfIpiMN00XUVNMh2yJT17E6vXfj4ft"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-24 pb-12 px-8 min-h-screen">
+<!-- Breadcrumbs & Header -->
+<div class="mb-8">
+<div class="flex items-center gap-2 text-xs font-medium text-on-surface-variant mb-2">
+<span>Auditoría</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="chevron_right">chevron_right</span>
+<span>Nómina Octubre</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="chevron_right">chevron_right</span>
+<span class="text-primary">Expediente #AR-902</span>
+</div>
+<h2 class="text-3xl font-extrabold tracking-tight text-on-surface">Revisión de Liquidación - Alejandro Rodríguez</h2>
+</div>
+<!-- Bento Layout for Review -->
+<div class="grid grid-cols-12 gap-6 items-start">
+<!-- Left Column: Calculation Breakdown -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<!-- Main Calculation Card -->
+<section class="bg-surface-container-lowest rounded-xl p-8 compliance-shield">
+<div class="flex justify-between items-start mb-8">
+<div>
+<h3 class="text-lg font-bold text-on-surface">Resumen de Liquidación</h3>
+<p class="text-sm text-on-surface-variant">Cálculos proyectados según normativa vigente 2024</p>
+</div>
+<div class="bg-secondary-container px-4 py-1.5 rounded-full">
+<span class="text-xs font-bold text-on-secondary-container uppercase tracking-wider">Auditando</span>
+</div>
+</div>
+<!-- Calculation Steps -->
+<div class="space-y-6">
+<!-- IBC Base -->
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-tighter">IBC Base (40%)</p>
+<p class="text-xl font-bold text-on-surface">$3.380.000</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-xs font-medium text-on-surface-variant italic">Base mínima legal aplicada</span>
+</div>
+</div>
+<!-- Deductions Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="p-4 bg-surface rounded-xl border border-outline-variant/10">
+<p class="text-xs font-medium text-on-surface-variant mb-1">Salud (4%)</p>
+<p class="text-lg font-bold text-on-surface">$422.500</p>
+</div>
+<div class="p-4 bg-surface rounded-xl border border-outline-variant/10">
+<p class="text-xs font-medium text-on-surface-variant mb-1">Pensión (4%)</p>
+<p class="text-lg font-bold text-on-surface">$540.800</p>
+</div>
+<div class="p-4 bg-surface rounded-xl border border-outline-variant/10">
+<p class="text-xs font-medium text-on-surface-variant mb-1">ARL (Riesgo I)</p>
+<p class="text-lg font-bold text-on-surface">$17.643</p>
+</div>
+</div>
+<!-- UVT Calculation -->
+<div class="p-6 bg-surface-container-low rounded-xl border-l-4 border-primary">
+<div class="flex justify-between items-center mb-4">
+<h4 class="text-sm font-bold text-on-surface">Retención en la Fuente (UVT)</h4>
+<span class="text-xs font-medium text-primary">Detalle de Cálculo</span>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between text-sm">
+<span class="text-on-surface-variant">Base gravable en UVT</span>
+<span class="font-mono font-medium">82.4 UVT</span>
+</div>
+<div class="flex justify-between text-sm">
+<span class="text-on-surface-variant">Tarifa marginal aplicada</span>
+<span class="font-mono font-medium">19%</span>
+</div>
+<div class="h-px bg-outline-variant/20 my-2"></div>
+<div class="flex justify-between text-sm font-bold">
+<span>Total Retención</span>
+<span class="text-primary">$184.200</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Data Insights / Documents (Asymmetric Element) -->
+<div class="grid grid-cols-2 gap-6">
+<div class="bg-surface-container-high rounded-xl p-6 flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined text-primary mb-2" data-icon="verified_user">verified_user</span>
+<h4 class="text-sm font-bold text-on-surface">Validación de Identidad</h4>
+<p class="text-xs text-on-surface-variant mt-1">Cédula y RUT validados contra bases de la DIAN.</p>
+</div>
+<button class="mt-4 text-xs font-bold text-primary flex items-center gap-1">VER ARCHIVOS <span class="material-symbols-outlined text-[14px]" data-icon="open_in_new">open_in_new</span></button>
+</div>
+<div class="bg-surface-container-high rounded-xl p-6 flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined text-tertiary mb-2" data-icon="history">history</span>
+<h4 class="text-sm font-bold text-on-surface">Histórico de Pagos</h4>
+<p class="text-xs text-on-surface-variant mt-1">Variación del 2.3% respecto al mes anterior.</p>
+</div>
+<button class="mt-4 text-xs font-bold text-tertiary flex items-center gap-1">COMPARAR <span class="material-symbols-outlined text-[14px]" data-icon="bar_chart">bar_chart</span></button>
+</div>
+</div>
+</div>
+<!-- Right Column: Auditor Controls -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<!-- Auditor Comments Panel -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10">
+<h3 class="text-md font-bold text-on-surface mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="rate_review">rate_review</span>
+                        Área de Nota
+                    </h3>
+<textarea class="w-full h-40 bg-surface-container-low border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/50" placeholder="Escriba sus observaciones sobre esta liquidación..."></textarea>
+<div class="mt-4 space-y-2">
+<label class="flex items-center gap-2 text-xs font-medium text-on-surface-variant cursor-pointer">
+<input class="rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+                            Notificar al usuario sobre ajustes
+                        </label>
+<label class="flex items-center gap-2 text-xs font-medium text-on-surface-variant cursor-pointer">
+<input class="rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+                            Marcar como revisión prioritaria
+                        </label>
+</div>
+</div>
+<!-- Final Actions -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10">
+<h3 class="text-sm font-bold text-on-surface mb-4">Acciones de Auditoría</h3>
+<div class="space-y-3">
+<button class="w-full py-4 bg-[#166534] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
+                            Dar Visto Bueno
+                        </button>
+<button class="w-full py-4 bg-[#991b1b] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="cancel">cancel</span>
+                            Rechazar/Ajustar
+                        </button>
+<button class="w-full py-3 text-on-surface-variant font-medium text-sm flex items-center justify-center gap-2 hover:bg-surface-container-low rounded-xl transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="schedule">schedule</span>
+                            Posponer Revisión
+                        </button>
+</div>
+</div>
+<!-- Auditor Status Info -->
+<div class="p-6 bg-primary/5 rounded-xl border border-primary/10">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+<span class="text-xs font-bold text-primary uppercase">Auditor Conectado</span>
+</div>
+<p class="text-[11px] text-on-surface-variant mt-2 leading-relaxed">
+                        Usted está operando bajo la licencia de cumplimiento institucional. Todas las acciones quedan registradas en el libro de auditoría inmutable.
+                    </p>
+</div>
+</div>
+</div>
+<!-- Compliance Integrity Section (Bottom Visual) -->
+<div class="mt-12 p-8 rounded-2xl bg-gradient-to-br from-primary to-primary-container text-white overflow-hidden relative">
+<div class="relative z-10 max-w-2xl">
+<h3 class="text-2xl font-bold mb-2">Protocolo Sentinel v4.2</h3>
+<p class="text-blue-100/80 text-sm leading-relaxed mb-6">Esta liquidación ha pasado por 12 reglas de validación automática antes de llegar a su panel. El riesgo de error calculado es inferior al 0.01%.</p>
+<div class="flex gap-4">
+<div class="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg border border-white/10">
+<span class="material-symbols-outlined text-sm" data-icon="gavel">gavel</span>
+<span class="text-xs font-medium">Ley 100 de 1993</span>
+</div>
+<div class="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg border border-white/10">
+<span class="material-symbols-outlined text-sm" data-icon="gavel">gavel</span>
+<span class="text-xs font-medium">Decreto 1607 de 2002</span>
+</div>
+</div>
+</div>
+<!-- Decorative Element -->
+<div class="absolute right-[-5%] bottom-[-20%] opacity-20">
+<span class="material-symbols-outlined text-[240px]" data-icon="security" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+</div>
+</main>
+</body></html>

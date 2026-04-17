@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type RolUsuario = 'CONTRATISTA' | 'CONTADOR' | 'ADMIN'
+export type RolUsuario = 'CONTRATISTA' | 'CONTADOR' | 'ADMIN' | 'ENTIDAD_CONTRATANTE'
 
 const tokenInicial = localStorage.getItem('access_token')
 const rolInicial = localStorage.getItem('user_role') as RolUsuario | null

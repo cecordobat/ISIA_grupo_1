@@ -26,7 +26,8 @@ export function LoginPage() {
         setMfaPending(data.mfa_token)
       } else if (data.access_token && data.rol) {
         setSession(data.access_token, data.rol)
-        navigate(data.rol === 'CONTADOR' ? '/contador' : '/liquidacion')
+        const dest = data.rol === 'CONTADOR' ? '/contador' : data.rol === 'ADMIN' ? '/admin' : data.rol === 'ENTIDAD_CONTRATANTE' ? '/verificacion' : '/liquidacion'
+        navigate(dest)
       } else {
         setError('La respuesta del servidor no contiene una sesion valida.')
       }

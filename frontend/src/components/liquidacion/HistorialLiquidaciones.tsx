@@ -3,6 +3,7 @@ import { contadorApi } from '../../api/contador'
 import { liquidacionesApi } from '../../api/liquidaciones'
 import type { HistorialItem, LiquidacionDetalle } from '../../api/liquidaciones'
 import { useAuthStore } from '../../store/authStore'
+import { ComparacionPeriodos } from './ComparacionPeriodos'
 
 interface HistorialLiquidacionesProps {
   perfilId: string
@@ -146,6 +147,13 @@ export function HistorialLiquidaciones({ perfilId }: HistorialLiquidacionesProps
             </button>
           ))}
         </div>
+      )}
+
+      {historial.length >= 2 && (
+        <ComparacionPeriodos
+          perfilId={perfilId}
+          periodos={historial.map((l) => l.periodo)}
+        />
       )}
 
       {error && <div className="error-banner">{error}</div>}

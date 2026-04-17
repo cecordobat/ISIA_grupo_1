@@ -17,6 +17,7 @@ from src.infrastructure.database import Base, engine
 # no se crean aunque el engine esté configurado.
 from src.infrastructure.models import (  # noqa: F401
     acceso_contador_perfil,
+    acceso_entidad_contratante,
     contrato,
     liquidacion_confirmacion,
     liquidacion_periodo,
@@ -66,6 +67,10 @@ def create_app() -> FastAPI:
     app.include_router(liquidaciones.router)
     app.include_router(perfiles.router)
     app.include_router(contratos.router)
+    from src.api.routers import admin
+    app.include_router(admin.router)
+    from src.api.routers import entidad_contratante
+    app.include_router(entidad_contratante.router)
 
     @app.get("/health")
     async def health() -> dict[str, str]:
