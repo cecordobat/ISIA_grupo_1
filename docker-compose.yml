@@ -8,13 +8,13 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
+      - ./backend/motor_dev.db:/app/motor_dev.db
     environment:
       - DATABASE_URL=sqlite+aiosqlite:///./motor_dev.db
       - SECRET_KEY=dev-only-change-in-production
       - ACCESS_TOKEN_EXPIRE_MINUTES=60
       - DEBUG=true
-    command: uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000
 
   frontend:
     build:

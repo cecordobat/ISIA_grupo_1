@@ -71,6 +71,8 @@ def create_app() -> FastAPI:
     app.include_router(admin.router)
     from src.api.routers import entidad_contratante
     app.include_router(entidad_contratante.router)
+    from src.api.routers import parametros_publicos
+    app.include_router(parametros_publicos.router)
 
     @app.get("/health")
     async def health() -> dict[str, str]:

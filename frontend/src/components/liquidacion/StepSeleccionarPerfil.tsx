@@ -2,9 +2,34 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { perfilesApi } from '../../api/perfiles'
 import { contadorApi } from '../../api/contador'
-import type { PerfilCreate, PerfilResponse } from '../../api/perfiles'
+import type { PerfilCreate, PerfilResponse, CIIUOption } from '../../api/perfiles'
 import { HistorialLiquidaciones } from './HistorialLiquidaciones'
 import { useLiquidacionStore } from '../../store/liquidacionStore'
+
+const EPS_COLOMBIA = [
+  'Compensar EPS',
+  'Sanitas EPS',
+  'Nueva EPS',
+  'Sura EPS',
+  'Famisanar',
+  'Salud Total EPS',
+  'Coosalud EPS',
+  'Mutual Ser EPS',
+  'Capital Salud EPS',
+  'Cajacopi EPS',
+  'Comfenalco Valle EPS',
+  'AIC EPS Indígena',
+  'Asmet Salud EPS',
+  'Emssanar EPS',
+]
+
+const AFP_COLOMBIA = [
+  'Colpensiones',
+  'Porvenir',
+  'Protección',
+  'Colfondos',
+  'Skandia AFP',
+]
 
 const emptyPerfilForm: PerfilCreate = {
   tipo_documento: 'CC',
@@ -18,6 +43,7 @@ const emptyPerfilForm: PerfilCreate = {
 
 export function StepSeleccionarPerfil() {
   const [perfiles, setPerfiles] = useState<PerfilResponse[]>([])
+  const [ciiuOpciones, setCiiuOpciones] = useState<CIIUOption[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -36,8 +62,12 @@ export function StepSeleccionarPerfil() {
     setLoading(true)
     setError(null)
     try {
-      const data = await perfilesApi.listar()
+      const [data, ciiu] = await Promise.all([
+        perfilesApi.listar(),
+        perfilesApi.listarCiiu(),
+      ])
       setPerfiles(data)
+      setCiiuOpciones(ciiu)
       setSelectedId((current) => current ?? data[0]?.id ?? null)
     } catch {
       setError('No se pudieron cargar los perfiles.')
@@ -200,40 +230,56 @@ export function StepSeleccionarPerfil() {
               <label className="block text-xs font-bold text-slate-500 uppercase mb-1" htmlFor="ciiu-principal">
                 CIIU Principal
               </label>
-              <input
+              <select
                 id="ciiu-principal"
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"
-                placeholder="6201"
                 value={newPerfil.ciiu_codigo}
-                onChange={(e) => setNewPerfil({ ...newPerfil, ciiu_codigo: e.target.value })}
+                onChange={(e) => setNewPerfil({ ...newPerfil, ciiu_codigo: e.target.value, confirmar_ciiu_alto: false })}
                 required
-              />
+              >
+                <option value="">Seleccione actividad CIIU...</option>
+                {ciiuOpciones.map((c) => (
+                  <option key={c.codigo} value={c.codigo}>
+                    {c.codigo} — {c.descripcion}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-1" htmlFor="eps">
                 EPS
               </label>
-              <input
+              <select
                 id="eps"
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"
                 value={newPerfil.eps}
                 onChange={(e) => setNewPerfil({ ...newPerfil, eps: e.target.value })}
                 required
-              />
+              >
+                <option value="">Seleccione EPS...</option>
+                {EPS_COLOMBIA.map((e) => (
+                  <option key={e} value={e}>{e}</option>
+                ))}
+              </select>
             </div>
 
             <div className="col-span-1 md:col-span-2">
               <label className="block text-xs font-bold text-slate-500 uppercase mb-1" htmlFor="afp">
-                AFP
+                AFP / Fondo de Pensiones
               </label>
-              <input
+              <select
                 id="afp"
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"
                 value={newPerfil.afp}
                 onChange={(e) => setNewPerfil({ ...newPerfil, afp: e.target.value })}
                 required
-              />
+              >
+                <option value="">Seleccione AFP...</option>
+                {AFP_COLOMBIA.map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
             </div>
 
             <div className="col-span-1 md:col-span-2 space-y-2">

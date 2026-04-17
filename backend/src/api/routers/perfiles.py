@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.dependencies import get_current_user
-from src.api.schemas.perfiles import PerfilCreate, PerfilResponse, PerfilUpdate
+from src.api.schemas.perfiles import CIIUListItem, PerfilCreate, PerfilResponse, PerfilUpdate
 from src.infrastructure.database import get_db
 from src.infrastructure.models.perfil_contratista import PerfilContratista
 from src.infrastructure.models.usuario import Usuario
@@ -143,6 +143,17 @@ async def listar_perfiles(
     )
     perfiles = list(result.scalars().all())
     return [await _perfil_response(p, db) for p in perfiles]
+
+
+@router.get("/ciiu/lista", response_model=list[CIIUListItem])
+async def listar_ciiu(
+    _: Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[CIIUListItem]:
+    """Retorna todos los códigos CIIU disponibles para selección de perfil."""
+    repo = ParametrosRepository(db)
+    items = await repo.listar_ciiu()
+    return [CIIUListItem(codigo=c.codigo_ciiu, descripcion=c.descripcion, pct_costos_presuntos=str(c.pct_costos_presuntos)) for c in items]
 
 
 @router.get("/{perfil_id}", response_model=PerfilResponse)

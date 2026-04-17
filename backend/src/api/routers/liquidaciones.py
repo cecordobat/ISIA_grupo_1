@@ -28,6 +28,7 @@ from src.infrastructure.repositories.acceso_contador_repo import AccesoContadorR
 from src.infrastructure.repositories.liquidacion_confirmacion_repo import (
     LiquidacionConfirmacionRepository,
 )
+from src.infrastructure.repositories.parametros_repo import ParametrosRepository
 
 router = APIRouter(prefix="/liquidaciones", tags=["liquidaciones"])
 
@@ -385,6 +386,22 @@ async def calcular_liquidacion(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     return await _resultado_a_response(ejecucion, db)
+
+
+class CIIUItemResponse(BaseModel):
+    codigo: str
+    descripcion: str
+    pct_costos_presuntos: str
+
+
+@router.get("/codigos-ciiu", response_model=list[CIIUItemResponse])
+async def listar_ciiu(
+    _: Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[CIIUItemResponse]:
+    """CIIU codes available for profile creation."""
+    items = await ParametrosRepository(db).listar_ciiu()
+    return [CIIUItemResponse(codigo=c.codigo_ciiu, descripcion=c.descripcion, pct_costos_presuntos=str(c.pct_costos_presuntos)) for c in items]
 
 
 @router.get("/anios-disponibles", response_model=AniosDisponiblesResponse)
