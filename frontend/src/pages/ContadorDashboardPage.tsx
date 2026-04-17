@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { contadorApi } from '../api/contador'
 import type { ClienteContador } from '../api/contador'
+import { MFASetupModal } from '../components/auth/MFASetupModal'
 import { HistorialLiquidaciones } from '../components/liquidacion/HistorialLiquidaciones'
 import { useAuthStore } from '../store/authStore'
 
@@ -10,6 +11,7 @@ export function ContadorDashboardPage() {
   const [seleccionado, setSeleccionado] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showMFASetup, setShowMFASetup] = useState(false)
 
   useEffect(() => {
     let activo = true
@@ -38,10 +40,22 @@ export function ContadorDashboardPage() {
     <div className="wizard-container">
       <div className="wizard-header">
         <h1>Portal Contador</h1>
-        <button className="btn-logout" onClick={logout}>
-          Cerrar sesion
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button className="btn-secondary" onClick={() => setShowMFASetup(true)}>
+            Configurar MFA
+          </button>
+          <button className="btn-logout" onClick={logout}>
+            Cerrar sesion
+          </button>
+        </div>
       </div>
+
+      {showMFASetup && (
+        <MFASetupModal
+          onComplete={() => setShowMFASetup(false)}
+          onCancel={() => setShowMFASetup(false)}
+        />
+      )}
 
       <div className="wizard-step">
         <h2>Clientes autorizados</h2>

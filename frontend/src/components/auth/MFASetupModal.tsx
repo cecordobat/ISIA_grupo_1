@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react'
-import { apiClient } from '../../api/client'
+import { useEffect, useState } from 'react'
+import { authApi, type MFASetupResponse } from '../../api/auth'
 
-interface MFASetupResponse {
-  totp_uri: string
-  secret: string
-  mensaje: string
+interface Props {
+  onComplete: () => void
+  onCancel: () => void
 }
 
-export function MFASetupModal({ onComplete, onCancel }: { onComplete: () => void, onCancel: () => void }) {
+export function MFASetupModal({ onComplete, onCancel }: Props) {
   const [data, setData] = useState<MFASetupResponse | null>(null)
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
@@ -16,10 +15,9 @@ export function MFASetupModal({ onComplete, onCancel }: { onComplete: () => void
   useEffect(() => {
     const fetchSetup = async () => {
       try {
-        const { data } = await apiClient.post<MFASetupResponse>('/auth/mfa/setup')
-        setData(data)
+        setData(await authApi.setupMFA())
       } catch {
-        setError('No se pudo iniciar la configuración de MFA.')
+        setError('No se pudo iniciar la configuracion de MFA.')
       }
     }
     void fetchSetup()
@@ -29,10 +27,10 @@ export function MFASetupModal({ onComplete, onCancel }: { onComplete: () => void
     setLoading(true)
     setError(null)
     try {
-      await apiClient.post('/auth/mfa/activate', { codigo: code })
+      await authApi.activateMFA(code)
       onComplete()
     } catch {
-      setError('Código inválido. Verifique su aplicación.')
+      setError('Codigo invalido. Verifique su aplicacion.')
     } finally {
       setLoading(false)
     }
@@ -42,15 +40,22 @@ export function MFASetupModal({ onComplete, onCancel }: { onComplete: () => void
     <div className="wizard-step" style={{ border: '2px solid var(--primary)' }}>
       <h2>Configurar Segundo Factor (MFA)</h2>
       <p className="step-description">
-        Proteja su cuenta de Contador. Escanee el código QR con su aplicación de autenticación (Google Authenticator, Authy, etc.).
+        Proteja su cuenta de contador. Escanee el codigo QR con su aplicacion de autenticacion.
       </p>
 
       {error && <div className="error-banner">{error}</div>}
 
       {data ? (
         <div style={{ textAlign: 'center' }}>
-          <div style={{ background: '#eee', padding: '2rem', marginBottom: '1.5rem', borderRadius: '8px', display: 'inline-block' }}>
-            {/* Aquí iría un componente de QR real en el futuro, por ahora simulamos con el URI */}
+          <div
+            style={{
+              background: '#eee',
+              padding: '2rem',
+              marginBottom: '1.5rem',
+              borderRadius: '8px',
+              display: 'inline-block',
+            }}
+          >
             <div style={{ fontSize: '0.8rem', wordBreak: 'break-all', maxWidth: '300px' }}>
               <code>{data.totp_uri}</code>
             </div>
@@ -58,8 +63,9 @@ export function MFASetupModal({ onComplete, onCancel }: { onComplete: () => void
           </div>
 
           <div className="field" style={{ maxWidth: '200px', margin: '0 auto 1.5rem' }}>
-            <label>Código de Validación</label>
+            <label htmlFor="mfa-code">Codigo de validacion</label>
             <input
+              id="mfa-code"
               type="text"
               maxLength={6}
               value={code}
@@ -73,11 +79,13 @@ export function MFASetupModal({ onComplete, onCancel }: { onComplete: () => void
             <button className="btn-primary" onClick={handleActivate} disabled={loading || code.length !== 6}>
               {loading ? 'Activando...' : 'Activar MFA'}
             </button>
-            <button className="btn-secondary" onClick={onCancel}>Cancelar</button>
+            <button className="btn-secondary" onClick={onCancel}>
+              Cancelar
+            </button>
           </div>
         </div>
       ) : (
-        <div className="loading-state">Iniciando configuración...</div>
+        <div className="loading-state">Iniciando configuracion...</div>
       )}
     </div>
   )

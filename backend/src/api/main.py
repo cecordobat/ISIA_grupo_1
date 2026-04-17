@@ -26,6 +26,7 @@ from src.infrastructure.models import (  # noqa: F401
     tabla_ciiu,
     tabla_retencion_383,
     usuario,
+    usuario_mfa,
 )
 
 settings = get_settings()

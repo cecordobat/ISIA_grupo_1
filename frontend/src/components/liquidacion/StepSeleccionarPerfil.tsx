@@ -16,6 +16,8 @@ const emptyPerfilForm: PerfilCreate = {
   confirmar_ciiu_alto: false,
 }
 
+export function StepSeleccionarPerfil() {
+  const [perfiles, setPerfiles] = useState<PerfilResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -55,6 +57,22 @@ const emptyPerfilForm: PerfilCreate = {
     setCreateWarning(null)
   }
 
+  const handleEditarPerfil = (perfil: PerfilResponse) => {
+    setEditingPerfilId(perfil.id)
+    setNewPerfil({
+      tipo_documento: perfil.tipo_documento,
+      numero_documento: perfil.numero_documento,
+      nombre_completo: perfil.nombre_completo,
+      eps: perfil.eps,
+      afp: perfil.afp,
+      ciiu_codigo: perfil.ciiu_codigo,
+      confirmar_ciiu_alto: false,
+    })
+    setIsCreating(true)
+    setCreateError(null)
+    setCreateWarning(null)
+  }
+
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setCreateError(null)
@@ -73,7 +91,10 @@ const emptyPerfilForm: PerfilCreate = {
       if (axios.isAxiosError(err) && err.response?.status === 422) {
         const detail = err.response.data?.detail
         if (detail?.requires_ciiu_confirmation) {
-          setCreateWarning(`El CIIU seleccionado tiene costos presuntos del ${(Number(detail.pct_costos_presuntos) * 100).toFixed(2)}%. Debe confirmar.`)
+          setCreateWarning(
+            `El CIIU seleccionado tiene costos presuntos del ${(Number(detail.pct_costos_presuntos) * 100).toFixed(2)}%. Debe confirmar.`
+          )
+          setNewPerfil((current) => ({ ...current, confirmar_ciiu_alto: true }))
           return
         }
       }
@@ -87,7 +108,10 @@ const emptyPerfilForm: PerfilCreate = {
     if (!selectedId || !contadorEmail) return
     setShareMessage(null)
     try {
-      const respuesta = await contadorApi.vincular({ perfil_id: selectedId, contador_email: contadorEmail })
+      const respuesta = await contadorApi.vincular({
+        perfil_id: selectedId,
+        contador_email: contadorEmail,
+      })
       setShareMessage(respuesta.message)
       setContadorEmail('')
     } catch {
@@ -95,17 +119,28 @@ const emptyPerfilForm: PerfilCreate = {
     }
   }
 
-  if (loading) return <div className="text-center p-10 font-bold text-slate-400">Cargando perfiles...</div>
+  if (loading) {
+    return <div className="text-center p-10 font-bold text-slate-400">Cargando perfiles...</div>
+  }
+
+  if (error) {
+    return <div className="error-banner">{error}</div>
+  }
 
   return (
     <div className="space-y-6 antialiased font-['Inter']">
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-[#181c20] mb-2">Tu Perfil de Contratista</h1>
-          <p className="text-[#434655] max-w-md">Seleccione o cree la identidad para la cual realizará el reporte de este mes.</p>
+          <p className="text-[#434655] max-w-md">
+            Seleccione o cree la identidad para la cual realizara el reporte de este mes.
+          </p>
         </div>
-        <button 
-          onClick={() => { resetFormState(); setIsCreating(true); }}
+        <button
+          onClick={() => {
+            resetFormState()
+            setIsCreating(true)
+          }}
           className="flex items-center gap-2 bg-[#004ac6] text-white px-6 py-2 rounded-lg font-bold text-sm shadow-md"
         >
           <span className="material-symbols-outlined text-lg">person_add</span>
@@ -115,61 +150,169 @@ const emptyPerfilForm: PerfilCreate = {
 
       {isCreating && (
         <div className="bg-white p-8 rounded-2xl shadow-xl border border-blue-50">
-          <h3 className="text-xl font-bold mb-6 text-[#181c20]">{editingPerfilId ? 'Editar Perfil' : 'Crear Perfil'}</h3>
+          <h3 className="text-xl font-bold mb-6 text-[#181c20]">
+            {editingPerfilId ? 'Editar Perfil' : 'Crear Perfil'}
+          </h3>
           <form onSubmit={handleCreateSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="col-span-1">
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo Documento</label>
-              <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" value={newPerfil.tipo_documento} onChange={e => setNewPerfil({...newPerfil, tipo_documento: e.target.value})}>
-                <option value="CC">Cédula de Ciudadanía</option>
-                <option value="CE">Cédula de Extranjería</option>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1" htmlFor="tipo-documento">
+                Tipo Documento
+              </label>
+              <select
+                id="tipo-documento"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"
+                value={newPerfil.tipo_documento}
+                onChange={(e) => setNewPerfil({ ...newPerfil, tipo_documento: e.target.value })}
+              >
+                <option value="CC">Cedula de Ciudadania</option>
+                <option value="CE">Cedula de Extranjeria</option>
+                <option value="PEP">PEP</option>
               </select>
             </div>
+
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Número Documento</label>
-              <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" value={newPerfil.numero_documento} onChange={e => setNewPerfil({...newPerfil, numero_documento: e.target.value})} required/>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1" htmlFor="numero-documento">
+                Numero Documento
+              </label>
+              <input
+                id="numero-documento"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"
+                value={newPerfil.numero_documento}
+                onChange={(e) => setNewPerfil({ ...newPerfil, numero_documento: e.target.value })}
+                required
+              />
             </div>
+
             <div className="col-span-1 md:col-span-2">
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre Completo</label>
-              <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" value={newPerfil.nombre_completo} onChange={e => setNewPerfil({...newPerfil, nombre_completo: e.target.value})} required/>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1" htmlFor="nombre-completo">
+                Nombre Completo
+              </label>
+              <input
+                id="nombre-completo"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"
+                value={newPerfil.nombre_completo}
+                onChange={(e) => setNewPerfil({ ...newPerfil, nombre_completo: e.target.value })}
+                required
+              />
             </div>
+
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">CIIU Principal</label>
-              <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" placeholder="e.g. 6201" value={newPerfil.ciiu_codigo} onChange={e => setNewPerfil({...newPerfil, ciiu_codigo: e.target.value})} required/>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1" htmlFor="ciiu-principal">
+                CIIU Principal
+              </label>
+              <input
+                id="ciiu-principal"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"
+                placeholder="6201"
+                value={newPerfil.ciiu_codigo}
+                onChange={(e) => setNewPerfil({ ...newPerfil, ciiu_codigo: e.target.value })}
+                required
+              />
             </div>
+
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">EPS / Fondo de Salud</label>
-              <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" value={newPerfil.eps} onChange={e => setNewPerfil({...newPerfil, eps: e.target.value})} required/>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1" htmlFor="eps">
+                EPS
+              </label>
+              <input
+                id="eps"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"
+                value={newPerfil.eps}
+                onChange={(e) => setNewPerfil({ ...newPerfil, eps: e.target.value })}
+                required
+              />
             </div>
+
+            <div className="col-span-1 md:col-span-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1" htmlFor="afp">
+                AFP
+              </label>
+              <input
+                id="afp"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"
+                value={newPerfil.afp}
+                onChange={(e) => setNewPerfil({ ...newPerfil, afp: e.target.value })}
+                required
+              />
+            </div>
+
             <div className="col-span-1 md:col-span-2 space-y-2">
-              {createWarning && <div className="p-3 bg-amber-50 text-amber-700 text-xs rounded-lg border border-amber-100">{createWarning}</div>}
-              {createError && <div className="p-3 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100">{createError}</div>}
+              {createWarning && (
+                <div className="p-3 bg-amber-50 text-amber-700 text-xs rounded-lg border border-amber-100">
+                  {createWarning}
+                </div>
+              )}
+              {createError && (
+                <div className="p-3 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100">
+                  {createError}
+                </div>
+              )}
             </div>
+
             <div className="col-span-1 md:col-span-2 flex gap-4 mt-4">
-              <button type="submit" disabled={creating} className="bg-[#004ac6] text-white px-10 py-3 rounded-xl font-bold">{creating ? 'Guardando...' : 'Guardar Perfil'}</button>
-              <button type="button" onClick={() => setIsCreating(false)} className="bg-slate-100 text-slate-600 px-10 py-3 rounded-xl font-bold">Cancelar</button>
+              <button type="submit" disabled={creating} className="bg-[#004ac6] text-white px-10 py-3 rounded-xl font-bold">
+                {creating ? 'Guardando...' : 'Guardar Perfil'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreating(false)
+                  resetFormState()
+                }}
+                className="bg-slate-100 text-slate-600 px-10 py-3 rounded-xl font-bold"
+              >
+                Cancelar
+              </button>
             </div>
           </form>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {perfiles.map(p => (
-          <div 
-            key={p.id}
-            onClick={() => setSelectedId(p.id)}
-            className={`cursor-pointer p-6 rounded-2xl border-2 transition-all ${selectedId === p.id ? 'border-[#004ac6] bg-blue-50/30' : 'border-slate-100 bg-white hover:border-slate-200'}`}
+        {perfiles.map((perfil) => (
+          <div
+            key={perfil.id}
+            onClick={() => setSelectedId(perfil.id)}
+            className={`cursor-pointer p-6 rounded-2xl border-2 transition-all ${
+              selectedId === perfil.id ? 'border-[#004ac6] bg-blue-50/30' : 'border-slate-100 bg-white hover:border-slate-200'
+            }`}
           >
             <div className="flex justify-between items-start mb-4">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${selectedId === p.id ? 'bg-[#004ac6] text-white' : 'bg-slate-100 text-slate-400'}`}>
+              <div
+                className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  selectedId === perfil.id ? 'bg-[#004ac6] text-white' : 'bg-slate-100 text-slate-400'
+                }`}
+              >
                 <span className="material-symbols-outlined">person</span>
               </div>
-              {selectedId === p.id && <span className="text-[#004ac6] material-symbols-outlined">check_circle</span>}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="text-slate-500 hover:text-[#004ac6]"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleEditarPerfil(perfil)
+                  }}
+                  aria-label={`Editar perfil ${perfil.nombre_completo}`}
+                >
+                  <span className="material-symbols-outlined">edit</span>
+                </button>
+                {selectedId === perfil.id && (
+                  <span className="text-[#004ac6] material-symbols-outlined">check_circle</span>
+                )}
+              </div>
             </div>
-            <h4 className="font-bold text-lg text-[#181c20]">{p.nombre_completo}</h4>
+            <h4 className="font-bold text-lg text-[#181c20]">{perfil.nombre_completo}</h4>
             <div className="text-sm text-slate-500 mt-2 space-y-1">
-              <p>{p.tipo_documento}: {p.numero_documento}</p>
-              <p>Actividad CIIU: <span className="font-bold text-slate-700">{p.ciiu_codigo}</span></p>
-              <p>EPS: {p.eps} | AFP: {p.afp}</p>
+              <p>
+                {perfil.tipo_documento}: {perfil.numero_documento}
+              </p>
+              <p>
+                Actividad CIIU: <span className="font-bold text-slate-700">{perfil.ciiu_codigo}</span>
+              </p>
+              <p>
+                EPS: {perfil.eps} | AFP: {perfil.afp}
+              </p>
             </div>
           </div>
         ))}
@@ -178,16 +321,24 @@ const emptyPerfilForm: PerfilCreate = {
       {selectedId && (
         <div className="flex justify-between items-center pt-6">
           <div className="flex gap-2">
-             <input 
+            <input
               className="p-3 bg-white border border-slate-200 rounded-lg text-sm w-64"
               placeholder="Vincular email del contador"
               value={contadorEmail}
-              onChange={e => setContadorEmail(e.target.value)}
+              onChange={(e) => setContadorEmail(e.target.value)}
             />
-            <button onClick={() => void handleCompartirConContador()} className="bg-slate-100 text-slate-600 px-4 rounded-lg font-bold text-sm">Vincular</button>
+            <button
+              onClick={() => void handleCompartirConContador()}
+              className="bg-slate-100 text-slate-600 px-4 rounded-lg font-bold text-sm"
+            >
+              Vincular
+            </button>
           </div>
-          <button 
-            onClick={() => { setPeriodo(selectedId, anio, mes); avanzarPaso(); }}
+          <button
+            onClick={() => {
+              setPeriodo(selectedId, anio, mes)
+              avanzarPaso()
+            }}
             className="bg-[#004ac6] text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-blue-100 hover:scale-105 transition-all flex items-center gap-2"
           >
             Continuar
@@ -195,10 +346,14 @@ const emptyPerfilForm: PerfilCreate = {
           </button>
         </div>
       )}
-      
+
       {shareMessage && <p className="text-xs text-blue-600 font-medium">{shareMessage}</p>}
-      
-      {selectedId && <div className="mt-10 pt-10 border-t border-slate-100"><HistorialLiquidaciones perfilId={selectedId} /></div>}
+
+      {selectedId && (
+        <div className="mt-10 pt-10 border-t border-slate-100">
+          <HistorialLiquidaciones perfilId={selectedId} />
+        </div>
+      )}
     </div>
   )
 }

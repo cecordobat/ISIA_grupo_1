@@ -28,6 +28,7 @@ from src.infrastructure.models import (  # noqa: F401
     tabla_ciiu,
     tabla_retencion_383,
     usuario,
+    usuario_mfa,
 )
 from src.infrastructure.models.snapshot_normativo import SnapshotNormativo
 from src.infrastructure.models.tabla_ciiu import TablaParametroCIIU

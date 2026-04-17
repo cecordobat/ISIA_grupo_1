@@ -1,6 +1,6 @@
 /**
  * Cliente HTTP con interceptor JWT.
- * Los valores monetarios vienen como strings (Decimal serializado) — nunca float.
+ * Los valores monetarios vienen como strings (Decimal serializado) y nunca como float.
  */
 import axios from 'axios'
 
@@ -11,7 +11,6 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Inyecta el JWT en cada request
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
   if (token) {
@@ -20,12 +19,18 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
-// Redirige al login si el token expiró
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const url = String(error.config?.url ?? '')
+    const isAuthFlow =
+      url.startsWith('/auth/login') ||
+      url.startsWith('/auth/register') ||
+      url.startsWith('/auth/mfa/')
+
+    if (error.response?.status === 401 && !isAuthFlow) {
       localStorage.removeItem('access_token')
+      localStorage.removeItem('user_role')
       window.location.href = '/login'
     }
     return Promise.reject(error)

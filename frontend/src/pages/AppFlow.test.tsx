@@ -197,18 +197,20 @@ describe('Flujo principal de autenticacion y sesion', () => {
     await user.type(screen.getByLabelText(/Contrasena/i), 'Clave123*')
     await user.click(screen.getByRole('button', { name: /Registrarse/i }))
 
-    expect(await screen.findByText(/No tiene perfiles registrados/i)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Tu Perfil de Contratista/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Nuevo Perfil/i })).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /Crear Nuevo Perfil/i }))
+    await user.click(screen.getByRole('button', { name: /Nuevo Perfil/i }))
     await user.type(screen.getByLabelText(/Numero Documento/i), '123456789')
     await user.type(screen.getByLabelText(/Nombre Completo/i), 'Willi Test')
     await user.type(screen.getByLabelText(/^EPS$/i), 'Nueva EPS')
     await user.type(screen.getByLabelText(/^AFP$/i), 'Porvenir')
-    await user.type(screen.getByLabelText(/Codigo CIIU/i), '6201')
+    await user.type(screen.getByLabelText(/CIIU Principal/i), '6201')
     await user.click(screen.getByRole('button', { name: /Guardar Perfil/i }))
 
     expect(await screen.findByText('Willi Test')).toBeInTheDocument()
-    expect(screen.getByText(/CIIU: 6201/i)).toBeInTheDocument()
+    expect(screen.getByText(/Actividad CIIU:/i)).toBeInTheDocument()
+    expect(screen.getByText(/6201/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /Cerrar sesion/i }))
 
@@ -217,11 +219,11 @@ describe('Flujo principal de autenticacion y sesion', () => {
       expect(useAuthStore.getState().isAuthenticated).toBe(false)
     })
 
-    await user.type(screen.getByLabelText(/^Email$/i), 'willi.test@example.com')
+    await user.type(screen.getByLabelText(/Correo Electronico/i), 'willi.test@example.com')
     await user.type(screen.getByLabelText(/Contrasena/i), 'Clave123*')
     await user.click(screen.getByRole('button', { name: /Ingresar/i }))
 
     expect(await screen.findByText('Willi Test')).toBeInTheDocument()
-    expect(screen.getByText(/Seleccione el perfil de contratista/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Tu Perfil de Contratista/i })).toBeInTheDocument()
   })
 })

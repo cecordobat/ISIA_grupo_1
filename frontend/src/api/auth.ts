@@ -17,6 +17,12 @@ export interface RegisterRequest {
   rol: RolUsuario
 }
 
+export interface MFASetupResponse {
+  totp_uri: string
+  secret: string
+  mensaje: string
+}
+
 export const authApi = {
   login: async (email: string, password: string): Promise<LoginResponse> => {
     const formData = new URLSearchParams()
@@ -34,6 +40,15 @@ export const authApi = {
       codigo: code,
     })
     return data
+  },
+
+  setupMFA: async (): Promise<MFASetupResponse> => {
+    const { data } = await apiClient.post<MFASetupResponse>('/auth/mfa/setup')
+    return data
+  },
+
+  activateMFA: async (codigo: string): Promise<void> => {
+    await apiClient.post('/auth/mfa/activate', { codigo })
   },
 
   register: async (body: RegisterRequest): Promise<LoginResponse> => {
